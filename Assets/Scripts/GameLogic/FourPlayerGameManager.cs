@@ -30,7 +30,7 @@ namespace Assets.Scripts.GameLogic
             _shuffleSeeds = bytes.Select(a => (int)a).ToList();
 
 
-            var deckFactory = new DeckFactory(new MBCardFactory(CardPrefab, new SimpleCardFactory(), new ResourceFolderCardTextureProvider()));
+            var deckFactory = new DeckFactory(new MBCardFactory(CardPrefab));
             _handFactory = new HandFactory(deckFactory, _shuffleSeeds);
 
             FourPlayer.OnPlayerJoined += player =>

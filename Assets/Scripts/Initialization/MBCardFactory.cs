@@ -1,26 +1,24 @@
 ﻿using Assets.Scripts.Card;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Assets.Scripts.Initialization
 {
     public class MBCardFactory : ICardFactory
     {
         private readonly GameObject _cardPrefab;
-        private readonly ICardFactory _realCardFactory;
-        private readonly ICardTextureProvider _textureProvider;
 
-        public MBCardFactory(GameObject cardPrefab, ICardFactory realCardFactory, ICardTextureProvider textureProvider)
+        public MBCardFactory(GameObject cardPrefab)
         {
             _cardPrefab = cardPrefab;
-            _realCardFactory = realCardFactory;
-            _textureProvider = textureProvider;
         }
 
         public ICard GetCard(Suit suit, Rank rank)
         {
-            var card = Object.Instantiate(_cardPrefab).GetComponent<MBCard>();
-            card.Initialize(_realCardFactory.GetCard(suit, rank), _textureProvider);
-            return card;
+            var card = Object.Instantiate(_cardPrefab);
+            NetworkServer.Spawn(card);
+            card.GetComponent<MBCard>().Initialize(rank, suit);
+            return card.GetComponent<MBCard>();
         }
     }
 }

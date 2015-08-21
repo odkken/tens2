@@ -1,29 +1,46 @@
 ﻿using Assets.Scripts.Initialization;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Assets.Scripts.Card
 {
-    [RequireComponent(typeof(MBMovable))]
-    public class MBCard : MonoBehaviour, ICard
+    [RequireComponent(typeof(IMovable))]
+    public class MBCard : NetworkBehaviour, ICard
     {
         private ICard _wrappedCard;
-        public void Initialize(ICard realCard, ICardTextureProvider textureProvider)
+
+        public void Initialize(Rank rank, Suit suit)
         {
-            _wrappedCard = realCard;
-            transform.FindChild("Front").GetComponent<SpriteRenderer>().sprite = textureProvider.GetCardTexture(Rank, Suit);
-            Movable = GetComponent<MBMovable>();
+            Rank = rank;
+            Suit = suit;
+            RpcInitialize(suit, rank);
         }
 
-        public Suit Suit
+        void Start()
         {
-            get { return _wrappedCard.Suit; }
+            Movable = GetComponent<IMovable>();
         }
 
-        public Rank Rank
+        [ClientRpc]
+        private void RpcInitialize(Suit suit, Rank rank)
         {
-            get { return _wrappedCard.Rank; }
+            Rank = rank;
+            Suit = suit;
+            Movable = GetComponent<IMovable>();
+            transform.FindChild("Front").GetComponent<SpriteRenderer>().sprite = ResourceFolderCardTextureProvider.GetCardTexture(Rank, Suit);
         }
+
+        public int ID { get { return ((int)Suit << 8) + (int)Rank; } }
+
+        public Suit Suit { get; private set; }
+
+        public Rank Rank { get; private set; }
 
         public IMovable Movable { get; private set; }
+
+        public override string ToString()
+        {
+            return Rank + " Of " + Suit;
+        }
     }
 }

@@ -33,6 +33,7 @@
 
     public interface ICard
     {
+        int ID { get; }
         Suit Suit { get; }
         Rank Rank { get; }
         IMovable Movable { get; }

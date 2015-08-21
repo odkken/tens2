@@ -3,9 +3,9 @@ using UnityEngine;
 
 namespace Assets.Scripts.Initialization
 {
-    class ResourceFolderCardTextureProvider : ICardTextureProvider
+    public static class ResourceFolderCardTextureProvider
     {
-        public Sprite GetCardTexture(Rank rank, Suit suit)
+        public static Sprite GetCardTexture(Rank rank, Suit suit)
         {
             var rankChar = "";
             if ((int)rank < 9)

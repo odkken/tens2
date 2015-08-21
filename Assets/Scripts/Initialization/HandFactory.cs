@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Assets.Scripts.Card;
 using Assets.Scripts.GameLogic;
 using Assets.Scripts.Player;
-using UnityEngine;
-using Random = System.Random;
 
 namespace Assets.Scripts.Initialization
 {
@@ -23,14 +22,15 @@ namespace Assets.Scripts.Initialization
         public IHand GetNewHand(List<IPlayer> players, int firstPlayerId, Dictionary<int, int> previousScores)
         {
             var deck = _deckFactory.GetTensDeck(_shuffleSeeds.Shuffle(rng).ToList());
-
-            var playerIndex = 0;
-            while (deck.NumCards > 0)
+            
+            foreach (var player in players)
             {
-                players[playerIndex].GiveCard(deck.PopCard());
-                playerIndex++;
-                if (playerIndex == players.Count)
-                    playerIndex = 0;
+                var theirCards = new List<ICard>();
+                while (theirCards.Count < 10)
+                {
+                    theirCards.Add(deck.PopCard());
+                }
+                player.GiveCards(theirCards);
             }
 
             return new SimpleHand(new RoundFactory(), players, previousScores, new BidManagerFactory(), firstPlayerId);

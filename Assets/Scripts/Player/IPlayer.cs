@@ -20,6 +20,6 @@ namespace Assets.Scripts.Player
         void GetNextBid(int minimum, Action<int, IPlayer> onBidAction);
 
         void PlayCard(List<ICard> cardsPlayedInRound, Suit playedSuit, Suit trumpSuit, Action<ICard, IPlayer> playAction);
-        void GiveCard(ICard card);
+        void GiveCards(List<ICard> cards);
     }
 }

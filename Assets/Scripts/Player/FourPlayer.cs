@@ -1,23 +1,22 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Assets.Code.MonoBehavior.GameSpecific.Tens;
 using Assets.Scripts.Card;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Assets.Scripts.Player
 {
     public class FourPlayer : NetworkBehaviour, IPlayer
     {
-        public class CardSyncList : SyncListStruct<CardInfo>
-        {
-
-        }
-
         void Start()
         {
             Id = (int)netId.Value;
             if (OnPlayerJoined != null)
                 OnPlayerJoined(this);
+            organizer = new CardOrganizer(Vector3.forward, GetComponent<NetworkIdentity>().isLocalPlayer, 10, 1);
         }
 
         void OnDestroy()
@@ -27,26 +26,37 @@ namespace Assets.Scripts.Player
         }
 
         public delegate void PlayerJoinOrLeave(IPlayer player);
-
         public static event PlayerJoinOrLeave OnPlayerJoined;
         public static event PlayerJoinOrLeave OnPlayerLeft;
-
-        public CardSyncList HandCards = new CardSyncList();
+        public List<ICard> HandCards = new List<ICard>();
+        private CardOrganizer organizer;
         public int Id { get; private set; }
         public string Name { get; private set; }
 
-        public void Initialize(int id, string playerName)
+        public void GiveCards(List<ICard> cards)
         {
-            Id = id;
-            Name = playerName;
+            RpcGiveCards(cards.Select(a => a.ID).ToArray());
         }
 
-        public void GiveCards(List<CardInfo> cards)
+        [ClientRpc]
+        private void RpcGiveCards(int[] cardIds)
         {
-            foreach (var cardInfo in cards)
+            StartCoroutine(WaitForCardsToSpawn(cardIds));
+        }
+
+        private IEnumerator WaitForCardsToSpawn(int[] cardIds)
+        {
+            while (true)
             {
-                HandCards.Add(cardInfo);
+                Debug.Log("waiting for cards...");
+                var spawnedIds = FindObjectsOfType<MBCard>().Select(a => a.ID);
+                if (cardIds.Any(a => !spawnedIds.Contains(a)))
+                    yield return null;
+                break;
             }
+            Debug.Log("all cards loaded");
+            HandCards = new List<ICard>(FindObjectsOfType<MBCard>().Where(a => cardIds.Contains(a.ID)).Select(a => a.GetComponent<ICard>()));
+            organizer.OrganizeHandCards(HandCards, Vector3.zero);
         }
 
         public void GetNextBid(int minimum, Action<int, IPlayer> onBidAction)
@@ -58,11 +68,6 @@ namespace Assets.Scripts.Player
         {
             _playAction = playAction;
             RpcPlayCard(cardsPlayedInRound.Select(a => new CardInfo { Suit = a.Suit, Rank = a.Rank }).ToList(), playedSuit, trumpSuit);
-        }
-
-        public void GiveCard(ICard card)
-        {
-            HandCards.Add(new CardInfo { Rank = card.Rank, Suit = card.Suit });
         }
 
         [ClientRpc]
