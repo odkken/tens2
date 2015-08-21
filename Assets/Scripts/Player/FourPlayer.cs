@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Assets.Code.GameSpecific.Tens;
 using Assets.Code.MonoBehavior.GameSpecific.Tens;
 using Assets.Scripts.Card;
 using UnityEngine;
@@ -16,7 +17,15 @@ namespace Assets.Scripts.Player
             Id = (int)netId.Value;
             if (OnPlayerJoined != null)
                 OnPlayerJoined(this);
-            organizer = new CardOrganizer(Vector3.forward, GetComponent<NetworkIdentity>().isLocalPlayer, 10, 1);
+            _organizer = new CardOrganizer(Vector3.forward, GetComponent<NetworkIdentity>().isLocalPlayer, 10, 1);
+            MBCard.OnClicked += card =>
+            {
+                if (_isMyPlayTurn && RuleHelpers.IsValidPlay(card, HandCards, _currentRoundInfo))
+                {
+                    CmdPickedCard(card.Suit, card.Rank);
+                    _isMyPlayTurn = false;
+                }
+            };
         }
 
         void OnDestroy()
@@ -29,7 +38,9 @@ namespace Assets.Scripts.Player
         public static event PlayerJoinOrLeave OnPlayerJoined;
         public static event PlayerJoinOrLeave OnPlayerLeft;
         public List<ICard> HandCards = new List<ICard>();
-        private CardOrganizer organizer;
+
+        private bool _isMyPlayTurn;
+        private CardOrganizer _organizer;
         public int Id { get; private set; }
         public string Name { get; private set; }
 
@@ -56,12 +67,30 @@ namespace Assets.Scripts.Player
             }
             Debug.Log("all cards loaded");
             HandCards = new List<ICard>(FindObjectsOfType<MBCard>().Where(a => cardIds.Contains(a.ID)).Select(a => a.GetComponent<ICard>()));
-            organizer.OrganizeHandCards(HandCards, Vector3.zero);
+            _organizer.OrganizeHandCards(HandCards, Vector3.zero);
         }
 
+        private Action<int, IPlayer> _bidAction;
+        private int minBid;
         public void GetNextBid(int minimum, Action<int, IPlayer> onBidAction)
         {
+            _bidAction = onBidAction;
+            minBid = minimum;
         }
+
+        public void Seat(Position position)
+        {
+            Position = position;
+            RpcSetPosition(position);
+        }
+
+        [ClientRpc]
+        void RpcSetPosition(Position pos)
+        {
+            Position = pos;
+        }
+
+        public Position Position { get; private set; }
 
         private Action<ICard, IPlayer> _playAction;
         public void PlayCard(List<ICard> cardsPlayedInRound, Suit playedSuit, Suit trumpSuit, Action<ICard, IPlayer> playAction)
@@ -70,11 +99,18 @@ namespace Assets.Scripts.Player
             RpcPlayCard(cardsPlayedInRound.Select(a => new CardInfo { Suit = a.Suit, Rank = a.Rank }).ToList(), playedSuit, trumpSuit);
         }
 
+
+        private RuleHelpers.RoundInfo _currentRoundInfo;
         [ClientRpc]
         private void RpcPlayCard(List<CardInfo> cardsPlayedInRound, Suit playedSuit, Suit trumpSuit)
         {
-            var a = HandCards.First();
-            CmdPickedCard(a.Suit, a.Rank);
+            _isMyPlayTurn = true;
+            _currentRoundInfo = new RuleHelpers.RoundInfo
+            {
+                CardsPlayedInRound = cardsPlayedInRound,
+                PlayedSuit = playedSuit,
+                TrumpSuit = trumpSuit
+            };
         }
 
         [Command]

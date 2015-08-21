@@ -13,18 +13,23 @@ namespace Assets.Scripts.Card
             _isStateLocked = true;
         }
 
+        public void Tilt(float angle)
+        {
+            transform.RotateAround(transform.position, transform.forward, angle);
+        }
+
         public void Flip()
         {
             _isStateLocked = false;
-            transform.rotation = Quaternion.LookRotation(-transform.forward);
+            transform.RotateAround(transform.position, transform.up, 180);
         }
 
         void Update()
         {
-            if (_isStateLocked)
-            {
-                transform.rotation = Quaternion.LookRotation(_lockedState == FlipState.FaceUp ? Vector3.up : Vector3.down);
-            }
+            //if (_isStateLocked)
+            //{
+            //    transform.rotation = Quaternion.LookRotation(_lockedState == FlipState.FaceUp ? Vector3.forward : Vector3.back, transform.up);
+            //}
         }
 
         public void MoveTo(Vector3 position, Action onFinishedMoving = null)

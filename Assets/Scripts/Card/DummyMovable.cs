@@ -10,6 +10,11 @@ namespace Assets.Scripts.Card
 
         }
 
+        public void Tilt(float angle)
+        {
+
+        }
+
         public void Flip()
         {
 

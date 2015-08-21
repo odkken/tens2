@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Assets.Code.GameSpecific.Tens;
+using Assets.Scripts.Player;
 
 namespace Assets.Scripts
 {
@@ -33,10 +35,14 @@ namespace Assets.Scripts
             return source[indexOfCurrent + 1];
         }
 
-        public static T GetFrom<T>(this List<T> source, T from, int distance)
+        public static IPlayer GetFrom(this List<IPlayer> players, IPlayer fromPlayer, int distance)
         {
-            var indexOfCurrent = source.IndexOf(from);
-            return source[(indexOfCurrent + distance) % source.Count];
+            var resultPlayer = fromPlayer;
+            for (var i = 0; i < distance; i++)
+            {
+                resultPlayer = RuleHelpers.GetNextPlayer(resultPlayer.Position, players);
+            }
+            return resultPlayer;
         }
     }
 }

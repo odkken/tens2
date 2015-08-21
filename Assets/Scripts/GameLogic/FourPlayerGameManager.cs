@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
+using Assets.Code.GameSpecific.Tens;
 using Assets.Scripts.Initialization;
 using Assets.Scripts.Player;
 using UnityEngine;
@@ -21,6 +22,7 @@ namespace Assets.Scripts.GameLogic
         private bool _isGameWon;
         private IPlayer _winner;
         private int _numHandsPlayed;
+        private bool playersSeated;
         private readonly List<IPlayer> _players = new List<IPlayer>();
         // Use this for initialization
         void Start()
@@ -37,7 +39,10 @@ namespace Assets.Scripts.GameLogic
             {
                 Debug.LogFormat("player {0} joined", player.Id);
                 _players.Add(player);
-                _firstPlayerToBid = _players.Shuffle(new Random()).First().Id;
+                if (_players.Count == 2)
+                {
+                    _firstPlayerToBid = _players.Shuffle(new Random()).First().Id;
+                }
             };
             FourPlayer.OnPlayerLeft += player =>
             {
@@ -50,7 +55,10 @@ namespace Assets.Scripts.GameLogic
 
         void Update()
         {
-            if (_isGameWon || _players.Count < 2)
+            if (_isGameWon)
+                return;
+
+            if (!playersSeated)
                 return;
 
             if (_currentHand == null)

@@ -51,7 +51,9 @@ namespace Assets.Code.MonoBehavior.GameSpecific.Tens
             {
                 var mover = card.Movable;
                 mover.LockFlipState(_areMine ? FlipState.FaceUp : FlipState.FaceDown);
-                mover.MoveTo(handPosition + RelativeRight(_forward) * Mathf.Lerp(-_handWidth * .5f, _handWidth * .5f, i / 9f));
+                var fraction = i / 9f;
+                mover.Tilt(Mathf.Lerp(-20, 20, fraction));
+                mover.MoveTo(handPosition + RelativeRight(_forward) * Mathf.Lerp(-_handWidth * .5f, _handWidth * .5f, fraction));
                 i++;
             }
 

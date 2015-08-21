@@ -16,6 +16,15 @@ namespace Assets.Scripts.Card
             RpcInitialize(suit, rank);
         }
 
+        public delegate void CardClicked(ICard card);
+        public static event CardClicked OnClicked;
+
+        void OnMouseDown()
+        {
+            if (OnClicked != null)
+                OnClicked(this);
+        }
+
         void Start()
         {
             Movable = GetComponent<IMovable>();
