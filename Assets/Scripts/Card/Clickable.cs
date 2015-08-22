@@ -6,7 +6,7 @@ namespace Assets.Scripts.Card
     {
         void OnMouseDown()
         {
-            transform.rotation = Quaternion.LookRotation(-transform.forward);
+            transform.RotateAround(transform.position, transform.up, 180);
         }
     }
 }

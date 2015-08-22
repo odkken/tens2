@@ -33,7 +33,7 @@ namespace Assets.Scripts.Initialization
             var frontSprite = Resources.Load<Sprite>("CardTextures/" + cardString);
             if (frontSprite == null)
             {
-                Debug.Log("Couldn't load " + cardString);
+                DebugConsole.Log("Couldn't load " + cardString);
             }
             return frontSprite;
         }

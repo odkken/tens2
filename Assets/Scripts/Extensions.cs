@@ -34,7 +34,7 @@ namespace Assets.Scripts
                 return source[0];
             return source[indexOfCurrent + 1];
         }
-
+        
         public static IPlayer GetFrom(this List<IPlayer> players, IPlayer fromPlayer, int distance)
         {
             var resultPlayer = fromPlayer;

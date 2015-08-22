@@ -37,18 +37,22 @@ namespace Assets.Scripts.GameLogic
 
             FourPlayer.OnPlayerJoined += player =>
             {
-                Debug.LogFormat("player {0} joined", player.Id);
+                DebugConsole.Log(string.Format("player {0} joined", player.Id));
                 _players.Add(player);
-                if (_players.Count == 2)
-                {
-                    _firstPlayerToBid = _players.Shuffle(new Random()).First().Id;
-                }
+
             };
             FourPlayer.OnPlayerLeft += player =>
             {
 
-                Debug.LogFormat("player {0} left", player.Id);
+                DebugConsole.Log(string.Format("player {0} left", player.Id));
                 _players.Remove(player);
+            };
+
+            SeatManager.OnAllPlayersSeated += () =>
+            {
+                DebugConsole.Log("All Players Seated, starting game.");
+                _firstPlayerToBid = _players.Shuffle(new Random()).First().Id;
+                playersSeated = true;
             };
         }
 
@@ -63,6 +67,7 @@ namespace Assets.Scripts.GameLogic
 
             if (_currentHand == null)
             {
+                DebugConsole.Log("Starting new hand...");
                 _currentHand = _handFactory.GetNewHand(_players, _players.GetFrom(_players.Single(a => a.Id == _firstPlayerToBid), _numHandsPlayed).Id, _cumulativeScores);
             }
 

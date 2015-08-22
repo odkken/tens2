@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Player;
+using UnityEngine;
 
 namespace Assets.Scripts.GameLogic
 {
@@ -23,32 +24,34 @@ namespace Assets.Scripts.GameLogic
             _onBidsCompletedAction = onBidsCompletedAction;
         }
 
+        private IPlayer lastBidder;
         public void Tick()
         {
             if (_biddingFinished || _waitingOnPlayer)
                 return;
-            var bidder = _players.GetFrom(_players.Single(a => a.Id == _firstPlayerToBid), _numBids);
+
+            var bidder = lastBidder == null ? _players.Single(a => a.Id == _firstPlayerToBid) : _players.Where(a => !_playerBids.ContainsKey(a.Id) || _playerBids[a.Id] != 0).ToList().GetFrom(lastBidder, 1);
             _waitingOnPlayer = true;
-            bidder.GetNextBid(_numBids == 0 ? 50 : _playerBids.Values.Max() + 5, OnBid);
+            DebugConsole.Log("Asking for bid from " + bidder.Name);
+            bidder.GetNextBid(_numBids == 0 ? 50 : Math.Max(_playerBids.Values.Max() + 5, 50), OnBid);
         }
 
         private void OnBid(int amount, IPlayer player)
         {
             _waitingOnPlayer = false;
+            lastBidder = player;
             _numBids++;
-            if (amount == 0 && (_playerBids.Any()))
+
+            if (!_playerBids.ContainsKey(player.Id))
+                _playerBids.Add(player.Id, amount);
+            else
+            {
+                _playerBids[player.Id] = amount;
+            }
+            if (_playerBids.Count == _players.Count && _playerBids.Count(a => a.Value == 0) == _players.Count - 1)
             {
                 _biddingFinished = true;
                 _onBidsCompletedAction(_playerBids);
-            }
-            else
-            {
-                if (!_playerBids.ContainsKey(player.Id))
-                    _playerBids.Add(player.Id, amount);
-                else
-                {
-                    _playerBids[player.Id] = amount;
-                }
             }
         }
     }

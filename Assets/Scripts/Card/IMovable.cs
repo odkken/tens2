@@ -10,6 +10,7 @@ namespace Assets.Scripts.Card
     }
     public interface IMovable
     {
+        void Orient(Vector3 forward);
         void LockFlipState(FlipState state);
         void Tilt(float angle);
         void Flip();

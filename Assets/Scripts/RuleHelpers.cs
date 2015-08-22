@@ -32,18 +32,28 @@ namespace Assets.Code.GameSpecific.Tens
 
         public static IPlayer GetNextPlayer(Position currentPlayerPosition, List<IPlayer> players)
         {
-            switch (currentPlayerPosition)
+            var nextPos = GetNextPosition(currentPlayerPosition);
+            while (players.All(a => a.Position != nextPos))
+            {
+                nextPos = GetNextPosition(nextPos);
+            }
+            return players.Single(a => a.Position == nextPos);
+        }
+
+        private static Position GetNextPosition(Position pos)
+        {
+            switch (pos)
             {
                 case Position.North:
-                    return players.Single(a => a.Position == Position.East);
+                    return Position.East;
                 case Position.South:
-                    return players.Single(a => a.Position == Position.West);
+                    return Position.West;
                 case Position.East:
-                    return players.Single(a => a.Position == Position.South);
+                    return Position.South;
                 case Position.West:
-                    return players.Single(a => a.Position == Position.North);
+                    return Position.North;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(currentPlayerPosition), currentPlayerPosition, null);
+                    throw new ArgumentOutOfRangeException();
             }
         }
 

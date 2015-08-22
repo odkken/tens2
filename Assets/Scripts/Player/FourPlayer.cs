@@ -5,36 +5,57 @@ using System.Linq;
 using Assets.Code.GameSpecific.Tens;
 using Assets.Code.MonoBehavior.GameSpecific.Tens;
 using Assets.Scripts.Card;
+using Assets.Scripts.UI;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.UI;
 
 namespace Assets.Scripts.Player
 {
     public class FourPlayer : NetworkBehaviour, IPlayer
     {
-        void Start()
+        private void Start()
         {
             Id = (int)netId.Value;
+            Name = "Player " + Id;
             if (OnPlayerJoined != null)
                 OnPlayerJoined(this);
-            _organizer = new CardOrganizer(Vector3.forward, GetComponent<NetworkIdentity>().isLocalPlayer, 10, 1);
+
             MBCard.OnClicked += card =>
             {
-                if (_isMyPlayTurn && RuleHelpers.IsValidPlay(card, HandCards, _currentRoundInfo))
+                if (!isLocalPlayer || !_isMyPlayTurn || !RuleHelpers.IsValidPlay(card, HandCards, _currentRoundInfo)) return;
+                CmdPickedCard(card.Suit, card.Rank);
+                _isMyPlayTurn = false;
+            };
+
+            BidGui.OnBidSubmitted += bid =>
+            {
+                if (!isMyTurnToBid || !isLocalPlayer) return;
+                CmdBid(bid);
+                isMyTurnToBid = false;
+                FindObjectOfType<BidGui>().Hide();
+            };
+
+            SeatManager.OnClickedSit += pos =>
+            {
+                if (isLocalPlayer)
                 {
-                    CmdPickedCard(card.Suit, card.Rank);
-                    _isMyPlayTurn = false;
+                    IsSeated = true;
+                    _position = (int)pos;
+                    _organizer = new CardOrganizer(pos, GetComponent<NetworkIdentity>().isLocalPlayer, 10, 1);
+                    CmdSit(pos);
                 }
             };
         }
 
-        void OnDestroy()
+        private void OnDestroy()
         {
             if (OnPlayerLeft != null)
                 OnPlayerLeft(this);
         }
 
         public delegate void PlayerJoinOrLeave(IPlayer player);
+
         public static event PlayerJoinOrLeave OnPlayerJoined;
         public static event PlayerJoinOrLeave OnPlayerLeft;
         public List<ICard> HandCards = new List<ICard>();
@@ -44,9 +65,34 @@ namespace Assets.Scripts.Player
         public int Id { get; private set; }
         public string Name { get; private set; }
 
+        [Command]
+        void CmdSetName(string name)
+        {
+            Name = name;
+            RpcSetName(name);
+        }
+
+        [ClientRpc]
+        void RpcSetName(string name)
+        {
+            Name = name;
+        }
+
         public void GiveCards(List<ICard> cards)
         {
             RpcGiveCards(cards.Select(a => a.ID).ToArray());
+        }
+
+        public void ClearCards()
+        {
+            HandCards.Clear();
+            RpcClearCards();
+        }
+
+        [ClientRpc]
+        private void RpcClearCards()
+        {
+            HandCards.Clear();
         }
 
         [ClientRpc]
@@ -59,48 +105,93 @@ namespace Assets.Scripts.Player
         {
             while (true)
             {
-                Debug.Log("waiting for cards...");
+                DebugConsole.Log("waiting for cards...");
                 var spawnedIds = FindObjectsOfType<MBCard>().Select(a => a.ID);
                 if (cardIds.Any(a => !spawnedIds.Contains(a)))
                     yield return null;
                 break;
             }
-            Debug.Log("all cards loaded");
-            HandCards = new List<ICard>(FindObjectsOfType<MBCard>().Where(a => cardIds.Contains(a.ID)).Select(a => a.GetComponent<ICard>()));
-            _organizer.OrganizeHandCards(HandCards, Vector3.zero);
+            DebugConsole.Log("all cards loaded");
+            HandCards =
+                new List<ICard>(
+                    FindObjectsOfType<MBCard>().Where(a => cardIds.Contains(a.ID)).Select(a => a.GetComponent<ICard>()));
+            _organizer.OrganizeHandCards(HandCards);
         }
 
         private Action<int, IPlayer> _bidAction;
+        private bool isMyTurnToBid;
         private int minBid;
+
         public void GetNextBid(int minimum, Action<int, IPlayer> onBidAction)
         {
             _bidAction = onBidAction;
-            minBid = minimum;
+            DebugConsole.Log(Name + " prompted for bid, asking them.");
+            RpcPromptBid(minimum);
+        }
+
+        [ClientRpc]
+        private void RpcPromptBid(int minBid)
+        {
+            if (!isLocalPlayer)
+                return;
+            DebugConsole.Log(Name + " received prompt to bid");
+            isMyTurnToBid = true;
+            var bidGui = FindObjectOfType<BidGui>();
+            bidGui.Show();
+            bidGui.SetMinBid(minBid);
+        }
+
+        [Command]
+        private void CmdBid(int amount)
+        {
+            _bidAction(amount, this);
+        }
+
+        [Command]
+        void CmdSit(Position pos)
+        {
+            Seat(pos);
         }
 
         public void Seat(Position position)
         {
             Position = position;
-            RpcSetPosition(position);
+            IsSeated = true;
+            RpcSit(Position);
         }
 
         [ClientRpc]
-        void RpcSetPosition(Position pos)
+        void RpcSit(Position pos)
         {
             Position = pos;
+            IsSeated = true;
         }
 
-        public Position Position { get; private set; }
+        [SyncVar]
+        private int _position;
+
+        [SyncVar]
+        public bool IsSeated;
+
+        public Position Position
+        {
+            get { return (Position)_position; }
+            private set { _position = (int)value; }
+        }
 
         private Action<ICard, IPlayer> _playAction;
-        public void PlayCard(List<ICard> cardsPlayedInRound, Suit playedSuit, Suit trumpSuit, Action<ICard, IPlayer> playAction)
+
+        public void PlayCard(List<ICard> cardsPlayedInRound, Suit playedSuit, Suit trumpSuit,
+            Action<ICard, IPlayer> playAction)
         {
             _playAction = playAction;
-            RpcPlayCard(cardsPlayedInRound.Select(a => new CardInfo { Suit = a.Suit, Rank = a.Rank }).ToList(), playedSuit, trumpSuit);
+            RpcPlayCard(cardsPlayedInRound.Select(a => new CardInfo { Suit = a.Suit, Rank = a.Rank }).ToList(), playedSuit,
+                trumpSuit);
         }
 
 
         private RuleHelpers.RoundInfo _currentRoundInfo;
+
         [ClientRpc]
         private void RpcPlayCard(List<CardInfo> cardsPlayedInRound, Suit playedSuit, Suit trumpSuit)
         {
@@ -114,7 +205,7 @@ namespace Assets.Scripts.Player
         }
 
         [Command]
-        void CmdPickedCard(Suit suit, Rank rank)
+        private void CmdPickedCard(Suit suit, Rank rank)
         {
             var card = HandCards.Single(a => a.Suit == suit && a.Rank == rank);
             HandCards.Remove(card);

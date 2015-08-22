@@ -3,6 +3,7 @@ using System.Linq;
 using Assets.Scripts.Card;
 using Assets.Scripts.Initialization;
 using Assets.Scripts.Player;
+using UnityEngine;
 
 namespace Assets.Scripts.GameLogic
 {
@@ -11,6 +12,7 @@ namespace Assets.Scripts.GameLogic
         private const int RoundLimit = 10;
         private readonly IBidManagerFactory _bidManagerFactory;
         private readonly List<IPlayer> _players;
+        private readonly IDeck _deck;
         private readonly Dictionary<int, int> _playerScores = new Dictionary<int, int>();
         private readonly Dictionary<int, int> _previousPlayerScores;
         private readonly IRoundFactory _roundFactory;
@@ -21,20 +23,41 @@ namespace Assets.Scripts.GameLogic
         private int _numRoundsPlayed;
         private int _startPlayerId;
 
-        public SimpleHand(IRoundFactory roundFactory, List<IPlayer> players, Dictionary<int, int> previousPlayerScores,
+        public SimpleHand(IRoundFactory roundFactory, List<IPlayer> players, IDeck deck, Dictionary<int, int> previousPlayerScores,
             IBidManagerFactory bidManagerFactory, int startPlayerId)
         {
             _roundFactory = roundFactory;
             _players = players;
+            _deck = deck;
             _previousPlayerScores = previousPlayerScores;
             _bidManagerFactory = bidManagerFactory;
             _startPlayerId = startPlayerId;
-            foreach (var player in players)
+
+            foreach (var player in _players)
             {
                 _playerScores.Add(player.Id, 0);
             }
+            DealCards();
+
+            DebugConsole.Log("cards dealt, starting new hand");
+            DebugConsole.Log("Getting first round in hand...");
             _currentRound = roundFactory.GetFirstRoundInHand(players, startPlayerId);
         }
+
+        private void DealCards()
+        {
+            foreach (var player in _players)
+            {
+                player.ClearCards();
+                var theirCards = new List<ICard>();
+                while (theirCards.Count < 10)
+                {
+                    theirCards.Add(_deck.PopCard());
+                }
+                player.GiveCards(theirCards);
+            }
+        }
+
 
         public void Tick()
         {
@@ -42,11 +65,21 @@ namespace Assets.Scripts.GameLogic
 
             if (!_biddingPrompted)
             {
+                DebugConsole.Log("prompting bids from simplehand...");
                 _biddingPrompted = true;
                 _bidManager = _bidManagerFactory.GetBidManager(_players, _startPlayerId, (ints =>
                 {
-                    _bids = ints;
-                    _startPlayerId = _bids.Single(b => b.Value == _bids.Values.Max()).Key;
+                    if (ints.All(a => a.Value == 0))
+                    {
+                        DebugConsole.Log("Everyone passed, re-dealing and bidding.");
+                        _biddingPrompted = false;
+                        DealCards();
+                    }
+                    else
+                    {
+                        _bids = ints;
+                        _startPlayerId = _bids.Single(b => b.Value == _bids.Values.Max()).Key;
+                    }
                 }));
             }
 

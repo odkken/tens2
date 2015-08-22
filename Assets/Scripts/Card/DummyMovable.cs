@@ -5,6 +5,11 @@ namespace Assets.Scripts.Card
 {
     class DummyMovable : IMovable
     {
+        public void Orient(Vector3 forward)
+        {
+
+        }
+
         public void LockFlipState(FlipState state)
         {
 

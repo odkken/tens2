@@ -31,5 +31,6 @@ namespace Assets.Scripts.Player
         Position Position { get; }
         void PlayCard(List<ICard> cardsPlayedInRound, Suit playedSuit, Suit trumpSuit, Action<ICard, IPlayer> playAction);
         void GiveCards(List<ICard> cards);
+        void ClearCards();
     }
 }

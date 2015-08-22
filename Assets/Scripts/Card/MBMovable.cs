@@ -7,6 +7,11 @@ namespace Assets.Scripts.Card
     {
         private FlipState _lockedState;
         private bool _isStateLocked;
+        public void Orient(Vector3 forward)
+        {
+            transform.rotation = Quaternion.FromToRotation(transform.up, forward);
+        }
+
         public void LockFlipState(FlipState state)
         {
             _lockedState = state;
@@ -26,10 +31,10 @@ namespace Assets.Scripts.Card
 
         void Update()
         {
-            //if (_isStateLocked)
-            //{
-            //    transform.rotation = Quaternion.LookRotation(_lockedState == FlipState.FaceUp ? Vector3.forward : Vector3.back, transform.up);
-            //}
+            if (_isStateLocked)
+            {
+                transform.rotation = Quaternion.LookRotation(_lockedState == FlipState.FaceUp ? Vector3.forward : Vector3.back, transform.up);
+            }
         }
 
         public void MoveTo(Vector3 position, Action onFinishedMoving = null)
