@@ -24,8 +24,8 @@ public class OrganizerTester : MonoBehaviour
             }
             hands.Add(thisHand);
         }
-        var organizer = new CardOrganizer(Position.West, true, 1, .5f);
-        organizer.OrganizeHandCards(hands[0]);
+        var organizer = new CardOrganizer(true, 1, .5f);
+        organizer.OrganizeHandCards(hands[0], Position.West);
     }
 
     // Update is called once per frame

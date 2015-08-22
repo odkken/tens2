@@ -10,14 +10,12 @@ namespace Assets.Code.MonoBehavior.GameSpecific.Tens
 {
     internal class CardOrganizer
     {
-        private readonly Position _playerPosition;
         private readonly bool _areMine;
         private readonly float _tableWidth;
         private readonly float _handWidth;
 
-        public CardOrganizer(Position playerPosition, bool areMine, float tableWidth, float handWidth)
+        public CardOrganizer(bool areMine, float tableWidth, float handWidth)
         {
-            _playerPosition = playerPosition;
             _areMine = areMine;
             _tableWidth = tableWidth;
             _handWidth = handWidth;
@@ -62,18 +60,18 @@ namespace Assets.Code.MonoBehavior.GameSpecific.Tens
                     throw new ArgumentOutOfRangeException();
             }
         }
-        public void OrganizeHandCards(List<ICard> cards)
+        public void OrganizeHandCards(List<ICard> cards, Position pos)
         {
-            var suits = cards.GroupBy(a => a.Suit);
+            var suits = cards.GroupBy(a => a.Suit).OrderByDescending(a => a.First().Suit);
             List<ICard> sortedCards = new List<ICard>();
             foreach (var suit in suits)
             {
-                sortedCards.AddRange(suit.OrderBy(a => a.Rank));
+                sortedCards.AddRange(suit.OrderByDescending(a => a.Rank));
             }
             if (sortedCards.Count != 10)
                 DebugConsole.Log("Bad list passed in to organize");
             var i = 0;
-            var handPosition = GetHandPosition(_playerPosition);
+            var handPosition = GetHandPosition(pos);
             foreach (var card in sortedCards)
             {
                 var mover = card.Movable;

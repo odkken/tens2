@@ -21,6 +21,7 @@ namespace Assets.Scripts.Player
             if (OnPlayerJoined != null)
                 OnPlayerJoined(this);
 
+            _organizer = new CardOrganizer(GetComponent<NetworkIdentity>().isLocalPlayer, 10, 1);
             MBCard.OnClicked += card =>
             {
                 if (!isLocalPlayer || !_isMyPlayTurn || !RuleHelpers.IsValidPlay(card, HandCards, _currentRoundInfo)) return;
@@ -42,7 +43,6 @@ namespace Assets.Scripts.Player
                 {
                     IsSeated = true;
                     _position = (int)pos;
-                    _organizer = new CardOrganizer(pos, GetComponent<NetworkIdentity>().isLocalPlayer, 10, 1);
                     CmdSit(pos);
                 }
             };
@@ -115,7 +115,7 @@ namespace Assets.Scripts.Player
             HandCards =
                 new List<ICard>(
                     FindObjectsOfType<MBCard>().Where(a => cardIds.Contains(a.ID)).Select(a => a.GetComponent<ICard>()));
-            _organizer.OrganizeHandCards(HandCards);
+            _organizer.OrganizeHandCards(HandCards, Position);
         }
 
         private Action<int, IPlayer> _bidAction;
