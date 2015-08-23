@@ -41,7 +41,6 @@ namespace Assets.Scripts.GameLogic
 
             DebugConsole.Log("cards dealt, starting new hand");
             DebugConsole.Log("Getting first round in hand...");
-            _currentRound = roundFactory.GetFirstRoundInHand(players, startPlayerId);
         }
 
         private void DealCards()
@@ -79,6 +78,8 @@ namespace Assets.Scripts.GameLogic
                     {
                         _bids = ints;
                         _startPlayerId = _bids.Single(b => b.Value == _bids.Values.Max()).Key;
+                        DebugConsole.Log(_players.Single(a => a.Id == _startPlayerId).Name + " held the bid");
+                        _currentRound = _roundFactory.GetFirstRoundInHand(_players, _startPlayerId);
                     }
                 }));
             }
@@ -92,6 +93,7 @@ namespace Assets.Scripts.GameLogic
             if (_currentRound.IsRoundFinished())
             {
                 _numRoundsPlayed++;
+                DebugConsole.Log("round " + _numRoundsPlayed + " finished");
                 TallyScores(_currentRound);
                 if (IsHandFinished())
                 {

@@ -27,6 +27,7 @@ namespace Assets.Scripts.Player
         /// <returns>Value between minimum-100 for a valid bid.  0 if pass</returns>
         void GetNextBid(int minimum, Action<int, IPlayer> onBidAction);
 
+        bool HasCard(ICard card);
         void Seat(Position position);
         Position Position { get; }
         void PlayCard(List<ICard> cardsPlayedInRound, Suit playedSuit, Suit trumpSuit, Action<ICard, IPlayer> playAction);

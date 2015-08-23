@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Assets.Code.GameSpecific.Tens;
+using System.Runtime.InteropServices.ComTypes;
 using Assets.Scripts.Card;
 using Assets.Scripts.Player;
+using UnityEngine;
 
 namespace Assets.Scripts.GameLogic
 {
@@ -40,6 +41,8 @@ namespace Assets.Scripts.GameLogic
             }
         }
 
+        private bool cardsCleanedUp = false;
+
         public bool IsRoundFinished()
         {
             return _cardsPlayed.Values.SelectMany(a => a).Count() == 4;
@@ -47,12 +50,24 @@ namespace Assets.Scripts.GameLogic
 
         public void Tick()
         {
+            if (IsRoundFinished() && !cardsCleanedUp)
+                CleanUpCards();
             if (IsRoundFinished() || _isWaitingOnPlayer) return;
 
             _isWaitingOnPlayer = true;
             var player = _players.GetFrom(_players.Single(a => a.Id == _startPlayerId),
                 _cardsPlayed.Values.SelectMany(a => a).Count());
+            DebugConsole.Log(player.Name + "'s turn to play");
             player.PlayCard(_cardsPlayed.Values.SelectMany(a => a).ToList(), _playedSuit, _trumpSuit, OnPlayCardCallback);
+        }
+
+        private void CleanUpCards()
+        {
+            foreach (var card in _cardsPlayed.SelectMany(a => a.Value))
+            {
+                card.Movable.MoveTo(new Vector3(50000, 0, 0));
+            }
+            cardsCleanedUp = true;
         }
 
         public IPlayer GetWinner()
@@ -90,6 +105,8 @@ namespace Assets.Scripts.GameLogic
             }
             _cardsPlayed[player.Id].Add(card);
             _isWaitingOnPlayer = false;
+            card.Movable.MoveTo(RuleHelpers.GetHandPosition(player.Position) * .1f);
+            card.Movable.Flip(FlipState.FaceUp, true);
         }
     }
 }

@@ -1,36 +1,44 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-using Assets.Code.MonoBehavior.GameSpecific.Tens;
+﻿using System.Collections.Generic;
 using Assets.Scripts.Card;
 using Assets.Scripts.Initialization;
 using Assets.Scripts.Player;
+using UnityEngine;
 
-public class OrganizerTester : MonoBehaviour
+namespace Assets
 {
-    public GameObject CardPrefab;
-
-    // Use this for initialization
-    void Start()
+    public class OrganizerTester : MonoBehaviour
     {
-        var deck = new DeckFactory(new MBCardFactory(CardPrefab, false)).GetTensDeck(new List<int> { 0, 1, 2 });
-        var hands = new List<List<ICard>>();
-        for (int i = 0; i < 4; i++)
+        public GameObject CardPrefab;
+        public Position Position;
+        public float HandDistance;
+        public float HandWidth;
+        public bool IsMine;
+        public float HandTilt;
+        // Use this for initialization
+        void Start()
         {
-            var thisHand = new List<ICard>();
-            while (thisHand.Count < 10)
+            var deck = new DeckFactory(new MBCardFactory(CardPrefab, false)).GetTensDeck(new List<int> { 0, 1, 2 });
+            var hands = new List<List<ICard>>();
+            for (int i = 0; i < 4; i++)
             {
-                thisHand.Add(deck.PopCard());
+                var thisHand = new List<ICard>();
+                while (thisHand.Count < 10)
+                {
+                    thisHand.Add(deck.PopCard());
+                }
+                hands.Add(thisHand);
             }
-            hands.Add(thisHand);
+            var organizer = new CardOrganizer(IsMine, 1, HandWidth, HandDistance, HandTilt);
+            for (int i = 0; i < 4; i++)
+            {
+                organizer.OrganizeHandCards(hands[i], (Position)i);
+            }
         }
-        var organizer = new CardOrganizer(true, 1, .5f);
-        organizer.OrganizeHandCards(hands[0], Position.West);
-    }
 
-    // Update is called once per frame
-    void Update()
-    {
+        // Update is called once per frame
+        void Update()
+        {
 
+        }
     }
 }

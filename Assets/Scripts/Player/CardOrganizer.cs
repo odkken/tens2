@@ -1,24 +1,26 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Assets.Scripts.Card;
-using Assets.Scripts.Player;
 using UnityEngine;
 
-namespace Assets.Code.MonoBehavior.GameSpecific.Tens
+namespace Assets.Scripts.Player
 {
     internal class CardOrganizer
     {
         private readonly bool _areMine;
         private readonly float _tableWidth;
         private readonly float _handWidth;
+        private readonly float _handDistance;
+        private readonly float _handTilt;
 
-        public CardOrganizer(bool areMine, float tableWidth, float handWidth)
+        public CardOrganizer(bool areMine, float tableWidth, float handWidth, float handDistance, float handTilt)
         {
             _areMine = areMine;
             _tableWidth = tableWidth;
             _handWidth = handWidth;
+            _handDistance = handDistance;
+            _handTilt = handTilt;
         }
 
         public void OrganizeTableCards(List<ICard> cards, Vector3 tablePosition)
@@ -43,23 +45,6 @@ namespace Assets.Code.MonoBehavior.GameSpecific.Tens
 
         }
 
-
-        private static Vector3 GetHandPosition(Position pos)
-        {
-            switch (pos)
-            {
-                case Position.North:
-                    return Vector3.up;
-                case Position.South:
-                    return Vector3.down;
-                case Position.East:
-                    return Vector3.right;
-                case Position.West:
-                    return Vector3.left;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
         public void OrganizeHandCards(List<ICard> cards, Position pos)
         {
             var suits = cards.GroupBy(a => a.Suit).OrderByDescending(a => a.First().Suit);
@@ -68,19 +53,21 @@ namespace Assets.Code.MonoBehavior.GameSpecific.Tens
             {
                 sortedCards.AddRange(suit.OrderByDescending(a => a.Rank));
             }
-            if (sortedCards.Count != 10)
-                DebugConsole.Log("Bad list passed in to organize");
             var i = 0;
-            var handPosition = GetHandPosition(pos);
+            var handPosition = RuleHelpers.GetHandPosition(pos);
             foreach (var card in sortedCards)
             {
                 var mover = card.Movable;
                 mover.Orient(-handPosition);
                 if (_areMine)
-                    mover.Flip();
-                var fraction = i / 9f;
-                //mover.Tilt(Mathf.Lerp(-20, 20, fraction));
-                mover.MoveTo(handPosition * .4f + RelativeRight(-handPosition) * Mathf.Lerp(-_handWidth * .5f, _handWidth * .5f, fraction) + new Vector3(0, 0, .1f * fraction));
+                    mover.Flip(FlipState.FaceUp, true);
+                var fraction = i * 1f / Math.Max(cards.Count - 1, 1);
+                var tiltAngle = Mathf.Lerp(-_handTilt, _handTilt, fraction);
+                mover.Tilt(tiltAngle);
+                mover.MoveTo(handPosition * _handDistance
+                    + RelativeRight(-handPosition) * Mathf.Lerp(-_handWidth * .5f, _handWidth * .5f, fraction)
+                    + new Vector3(0, 0, .1f * fraction)
+                    + handPosition * Math.Abs(tiltAngle) * .002f);
                 i++;
             }
 

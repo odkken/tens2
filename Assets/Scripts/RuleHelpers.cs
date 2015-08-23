@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Card;
 using Assets.Scripts.Player;
+using UnityEngine;
 
-namespace Assets.Code.GameSpecific.Tens
+namespace Assets.Scripts
 {
     public static class RuleHelpers
     {
@@ -17,17 +18,43 @@ namespace Assets.Code.GameSpecific.Tens
 
         public struct RoundInfo
         {
-            public List<CardInfo> CardsPlayedInRound;
+            public List<ICard> CardsPlayedInRound;
             public Suit PlayedSuit;
             public Suit TrumpSuit;
         }
 
+
+        public static Vector3 GetHandPosition(Position pos)
+        {
+            switch (pos)
+            {
+                case Position.North:
+                    return Vector3.up;
+                case Position.South:
+                    return Vector3.down;
+                case Position.East:
+                    return Vector3.right;
+                case Position.West:
+                    return Vector3.left;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
         public static bool IsValidPlay(ICard card, List<ICard> allRemainingCards, RoundInfo info)
         {
-            return allRemainingCards.Contains(card) &&
-                (!info.CardsPlayedInRound.Any() ||
-                   card.Suit == info.PlayedSuit ||
-                   allRemainingCards.All(a => a.Suit != info.PlayedSuit));
+            try
+            {
+                var valid = allRemainingCards.Contains(card) &&
+                            (!info.CardsPlayedInRound.Any() ||
+                             card.Suit == info.PlayedSuit ||
+                             allRemainingCards.All(a => a.Suit != info.PlayedSuit));
+                return valid;
+            }
+            catch (Exception e)
+            {
+                DebugConsole.Log(e.ToString());
+                return false;
+            }
         }
 
         public static IPlayer GetNextPlayer(Position currentPlayerPosition, List<IPlayer> players)
@@ -55,6 +82,13 @@ namespace Assets.Code.GameSpecific.Tens
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+
+        public static bool IsCardLocalPlayers(ICard card)
+        {
+            var allPlayers = UnityEngine.Object.FindObjectsOfType<FourPlayer>();
+            var playerWhoOwnsCard = allPlayers.FirstOrDefault(a => a.HasCard(card));
+            return playerWhoOwnsCard != null && playerWhoOwnsCard.isLocalPlayer;
         }
 
         public static int GetPointValue(List<ICard> cards)

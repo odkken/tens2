@@ -11,9 +11,11 @@ namespace Assets.Scripts.Card
     public interface IMovable
     {
         void Orient(Vector3 forward);
-        void LockFlipState(FlipState state);
+        void LockFlipState();
+        void Grow();
+        void Shrink();
         void Tilt(float angle);
-        void Flip();
+        void Flip(FlipState state, bool localOnly);
         void MoveTo(Vector3 position, Action onFinishedMoving = null);
         bool IsMoving { get; }
         Vector3 CurrentPosition { get; }

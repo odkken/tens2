@@ -48,8 +48,14 @@ namespace Assets.Scripts.GameLogic
             {
                 _playerBids[player.Id] = amount;
             }
-            if (_playerBids.Count == _players.Count && _playerBids.Count(a => a.Value == 0) == _players.Count - 1)
+            if (_playerBids.Any(a => a.Value == 100)
+                || (_playerBids.Count == _players.Count && _playerBids.Count(a => a.Value == 0) >= _players.Count - 1))
             {
+                DebugConsole.Log("bidding finished");
+                foreach (var playerBid in _playerBids)
+                {
+                    DebugConsole.Log(_players.Single(a => a.Id == playerBid.Key).Name + ": " + playerBid.Value);
+                }
                 _biddingFinished = true;
                 _onBidsCompletedAction(_playerBids);
             }

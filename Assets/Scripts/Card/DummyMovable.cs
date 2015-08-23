@@ -10,19 +10,27 @@ namespace Assets.Scripts.Card
 
         }
 
-        public void LockFlipState(FlipState state)
+        public void LockFlipState()
         {
-
         }
+
+        public void Grow()
+        {
+            
+        }
+
+        public void Shrink()
+        {
+        }
+
 
         public void Tilt(float angle)
         {
 
         }
 
-        public void Flip()
+        public void Flip(FlipState state, bool localOnly)
         {
-
         }
 
         public void MoveTo(Vector3 position, Action onFinishedMoving = null)

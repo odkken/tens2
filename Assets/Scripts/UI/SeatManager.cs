@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using Assets.Scripts.Player;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.UI;
 
-namespace Assets
+namespace Assets.Scripts.UI
 {
     public class SeatManager : NetworkBehaviour
     {
@@ -127,6 +125,7 @@ namespace Assets
         void RpcHide()
         {
             transform.position = new Vector3(50000, 0);
+            FindObjectOfType<PlayerLabels>().Show();
         }
 
         public delegate void AllPlayersSeated();

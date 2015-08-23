@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Assets.Scripts.Card;
 
 namespace Assets.Scripts.Initialization
@@ -10,6 +11,7 @@ namespace Assets.Scripts.Initialization
 
         public SimpleDeck(IEnumerable<ICard> cards)
         {
+            cards.ToList().ForEach(a => a.Movable.Flip(FlipState.FaceDown, false));
             _cards = new Queue<ICard>(cards);
         }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Assets.Scripts.Card;
 
 namespace Assets.Scripts.Initialization
@@ -7,7 +8,7 @@ namespace Assets.Scripts.Initialization
     public class DeckFactory : IDeckFactory
     {
         private readonly ICardFactory _cardFactory;
-
+        private readonly List<ICard> cachedCards = new List<ICard>();
         public DeckFactory(ICardFactory cardFactory)
         {
             _cardFactory = cardFactory;
@@ -16,7 +17,6 @@ namespace Assets.Scripts.Initialization
         public IDeck GetDeck(List<Suit> excludedSuits = null, List<Rank> excludedRanks = null,
             List<int> shuffleSeeds = null)
         {
-            var cards = new List<ICard>();
             foreach (Suit suit in Enum.GetValues(typeof(Suit)))
             {
                 if (excludedSuits == null || !excludedSuits.Contains(suit))
@@ -24,11 +24,12 @@ namespace Assets.Scripts.Initialization
                     {
                         if (excludedRanks == null || !excludedRanks.Contains(rank))
                         {
-                            cards.Add(_cardFactory.GetCard(suit, rank));
+                            if (!cachedCards.Any(a => a.Suit == suit && a.Rank == rank))
+                                cachedCards.Add(_cardFactory.GetCard(suit, rank));
                         }
                     }
             }
-            var deck = new SimpleDeck(cards);
+            var deck = new SimpleDeck(cachedCards.Where(a => (excludedSuits == null || !excludedSuits.Contains(a.Suit)) && (excludedRanks == null || !excludedRanks.Contains(a.Rank))));
             if (shuffleSeeds == null)
             {
                 deck.Shuffle(0);

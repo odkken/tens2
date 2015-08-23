@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
-using Assets.Code.GameSpecific.Tens;
 using Assets.Scripts.Initialization;
 using Assets.Scripts.Player;
+using Assets.Scripts.UI;
 using UnityEngine;
 using Random = System.Random;
 
@@ -52,6 +52,11 @@ namespace Assets.Scripts.GameLogic
             {
                 DebugConsole.Log("All Players Seated, starting game.");
                 _firstPlayerToBid = _players.Shuffle(new Random()).First().Id;
+                _cumulativeScores = new Dictionary<int, int>();
+                foreach (var player in _players)
+                {
+                    _cumulativeScores.Add(player.Id, 0);
+                }
                 playersSeated = true;
             };
         }
@@ -83,6 +88,7 @@ namespace Assets.Scripts.GameLogic
                 {
                     _isGameWon = true;
                     _winner = _currentHand.GetBidHolder();
+                    DebugConsole.Log(_winner + " won");
                 }
                 else if (_cumulativeScores.Any(a => a.Value >= 200))
                 {
