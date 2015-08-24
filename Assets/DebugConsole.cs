@@ -224,7 +224,7 @@ namespace Assets
         //++++ OVERLOAD ++++
         public static void Log(string message)
         {
-            Instance.AddMessage(message);
+            //Instance.AddMessage(message);
         }
 
         public static void Clear()

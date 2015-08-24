@@ -246,7 +246,7 @@ namespace Assets.Scripts.Player
                 trumpSuit);
         }
 
-        private bool _bot = true;
+        private bool _bot = false;
 
         private RuleHelpers.RoundInfo _currentRoundInfo;
 
