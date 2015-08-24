@@ -13,11 +13,13 @@
     <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>Unity Web v3.5</TargetFrameworkProfile>
-    <CompilerResponseFile></CompilerResponseFile>
+    <CompilerResponseFile>
+    </CompilerResponseFile>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>WebPlayer:6</UnityBuildTarget>
     <UnityVersion>5.1.2f1</UnityVersion>
-    <RootNamespace></RootNamespace>
+    <RootNamespace>
+    </RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -66,10 +68,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\DebugConsole.cs" />
-    <Compile Include="Assets\OrganizerTester.cs" />
-    <Compile Include="Assets\PlayerLabels.cs" />
-    <Compile Include="Assets\ScoreDisplay.cs" />
+    <Compile Include="Assets\Matchmaker.cs" />
     <Compile Include="Assets\Scripts\Card\DummyMovable.cs" />
     <Compile Include="Assets\Scripts\Card\ICard.cs" />
     <Compile Include="Assets\Scripts\Card\IMovable.cs" />
@@ -78,12 +77,12 @@
     <Compile Include="Assets\Scripts\Card\MBMovable.cs" />
     <Compile Include="Assets\Scripts\Card\NonNetworkedMBCard.cs" />
     <Compile Include="Assets\Scripts\Card\SimpleCard.cs" />
-    <Compile Include="Assets\Scripts\Extensions.cs" />
     <Compile Include="Assets\Scripts\GameLogic\BidManager.cs" />
     <Compile Include="Assets\Scripts\GameLogic\FourPlayerGameManager.cs" />
     <Compile Include="Assets\Scripts\GameLogic\IBidManager.cs" />
     <Compile Include="Assets\Scripts\GameLogic\IHand.cs" />
     <Compile Include="Assets\Scripts\GameLogic\IRound.cs" />
+    <Compile Include="Assets\Scripts\GameLogic\RuleHelpers.cs" />
     <Compile Include="Assets\Scripts\GameLogic\SimpleHand.cs" />
     <Compile Include="Assets\Scripts\GameLogic\SimpleRound.cs" />
     <Compile Include="Assets\Scripts\Initialization\BidManagerFactory.cs" />
@@ -102,13 +101,20 @@
     <Compile Include="Assets\Scripts\Initialization\RoundFactory.cs" />
     <Compile Include="Assets\Scripts\Initialization\SimpleCardFactory.cs" />
     <Compile Include="Assets\Scripts\Initialization\SimpleDeck.cs" />
+    <Compile Include="Assets\Scripts\Misc\DebugConsole.cs" />
+    <Compile Include="Assets\Scripts\Misc\Extensions.cs" />
+    <Compile Include="Assets\Scripts\Misc\OrganizerTester.cs" />
     <Compile Include="Assets\Scripts\Player\CardOrganizer.cs" />
     <Compile Include="Assets\Scripts\Player\FourPlayer.cs" />
     <Compile Include="Assets\Scripts\Player\IPlayer.cs" />
-    <Compile Include="Assets\Scripts\RuleHelpers.cs" />
+    <Compile Include="Assets\Scripts\SimpleInput.cs" />
     <Compile Include="Assets\Scripts\UI\BidGui.cs" />
+    <Compile Include="Assets\Scripts\UI\HostGame.cs" />
+    <Compile Include="Assets\Scripts\UI\PlayerLabels.cs" />
+    <Compile Include="Assets\Scripts\UI\ScoreDisplay.cs" />
+    <Compile Include="Assets\Scripts\UI\SeatButton.cs" />
     <Compile Include="Assets\Scripts\UI\SeatManager.cs" />
-    <Compile Include="Assets\SeatButton.cs" />
+    <Compile Include="Assets\Scripts\JoinButton.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>

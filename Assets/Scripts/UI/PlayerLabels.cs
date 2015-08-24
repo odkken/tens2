@@ -4,7 +4,7 @@ using Assets.Scripts.Player;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Assets
+namespace Assets.Scripts.UI
 {
     public class PlayerLabels : MonoBehaviour
     {

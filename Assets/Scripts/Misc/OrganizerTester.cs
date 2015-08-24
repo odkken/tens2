@@ -4,7 +4,7 @@ using Assets.Scripts.Initialization;
 using Assets.Scripts.Player;
 using UnityEngine;
 
-namespace Assets
+namespace Assets.Scripts.Misc
 {
     public class OrganizerTester : MonoBehaviour
     {

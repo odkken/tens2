@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Card;
+using Assets.Scripts.Misc;
 using Assets.Scripts.Player;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Assets.Scripts
+namespace Assets.Scripts.GameLogic
 {
     public static class RuleHelpers
     {

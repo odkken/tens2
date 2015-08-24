@@ -1,9 +1,8 @@
 ﻿using Assets.Scripts.Player;
-using Assets.Scripts.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Assets
+namespace Assets.Scripts.UI
 {
     public class SeatButton : MonoBehaviour
     {

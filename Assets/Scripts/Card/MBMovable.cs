@@ -71,7 +71,7 @@ namespace Assets.Scripts.Card
 
         IEnumerator AnimateMove(Vector3 newPosition, float delay, float seconds, Action onFinishedAction)
         {
-            moving = true;
+            _moving = true;
             var t0 = 0f;
             while (t0 < delay)
             {
@@ -88,12 +88,12 @@ namespace Assets.Scripts.Card
                 yield return null;
             }
             transform.position = newPosition;
-            moving = false;
+            _moving = false;
             if (onFinishedAction != null)
                 onFinishedAction();
         }
 
-        private bool moving;
+        private bool _moving;
 
         //[ClientRpc]
         //void RpcFlip(FlipState state)

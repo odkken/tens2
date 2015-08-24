@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.GameLogic;
+using Assets.Scripts.Misc;
 using Assets.Scripts.Player;
 
 namespace Assets.Scripts.Initialization

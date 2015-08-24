@@ -2,6 +2,7 @@
 using System.Linq;
 using Assets.Scripts.Card;
 using Assets.Scripts.Initialization;
+using Assets.Scripts.Misc;
 using Assets.Scripts.Player;
 using UnityEngine;
 
@@ -94,12 +95,12 @@ namespace Assets.Scripts.GameLogic
                 TallyScores(_currentRound);
                 if (IsHandFinished())
                 {
-                    var t1prior = _previousTeamScores[1];
-                    var t2prior = _previousTeamScores[2];
+                    var t1Prior = _previousTeamScores[1];
+                    var t2Prior = _previousTeamScores[2];
 
                     var t1ThisHand = _teamScores[1];
                     var t2ThisHand = _teamScores[2];
-                    Debug.LogFormat("t1 prior: {0}, t2 prior: {1}", t1prior, t2prior);
+                    Debug.LogFormat("t1 prior: {0}, t2 prior: {1}", t1Prior, t2Prior);
                     Debug.LogFormat("t1 this Hand: {0}, t2 this Hand: {1}", t1ThisHand, t2ThisHand);
 
                     var heldBid = _bids.Values.Max();

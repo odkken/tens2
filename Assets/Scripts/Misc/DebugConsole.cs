@@ -40,7 +40,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace Assets
+namespace Assets.Scripts.Misc
 {
     public class DebugConsole : MonoBehaviour
     {

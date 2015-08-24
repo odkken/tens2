@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using Assets.Scripts.Initialization;
+using Assets.Scripts.Misc;
 using Assets.Scripts.Player;
 using Assets.Scripts.UI;
 using UnityEngine;
@@ -17,8 +18,8 @@ namespace Assets.Scripts.GameLogic
         private IHandFactory _handFactory;
         private List<int> _shuffleSeeds;
         private readonly Action<int> _onFinished;
-        private int team1CumulativeScore;
-        private int team2CumulativeScore;
+        private int _team1CumulativeScore;
+        private int _team2CumulativeScore;
         private IHand _currentHand;
         private bool _isGameWon;
         private int _winner;
@@ -62,8 +63,8 @@ namespace Assets.Scripts.GameLogic
         public static event ScoreUpdate OnScoreUpdate;
 
 
-        private bool loggedFinish = false;
-        private float finishTime;
+        private bool _loggedFinish = false;
+        private float _finishTime;
         void Update()
         {
             if (_isGameWon)
@@ -75,33 +76,33 @@ namespace Assets.Scripts.GameLogic
             if (_currentHand == null)
             {
                 DebugConsole.Log("Starting new hand...");
-                _currentHand = _handFactory.GetNewHand(_players, _players.GetFrom(_players.Single(a => a.Id == _firstPlayerToBid), _numHandsPlayed).Id, team1CumulativeScore, team2CumulativeScore);
+                _currentHand = _handFactory.GetNewHand(_players, _players.GetFrom(_players.Single(a => a.Id == _firstPlayerToBid), _numHandsPlayed).Id, _team1CumulativeScore, _team2CumulativeScore);
             }
 
             if (_currentHand.IsHandFinished())
             {
-                if (!loggedFinish)
+                if (!_loggedFinish)
                 {
-                    finishTime = Time.time;
-                    loggedFinish = true;
+                    _finishTime = Time.time;
+                    _loggedFinish = true;
                 }
             }
-            if (loggedFinish && Time.time - finishTime > 5)
+            if (_loggedFinish && Time.time - _finishTime > 5)
             {
-                loggedFinish = false;
+                _loggedFinish = false;
                 _numHandsPlayed++;
-                team1CumulativeScore = _currentHand.GetPointsForTeam(1);
-                team2CumulativeScore = _currentHand.GetPointsForTeam(2);
+                _team1CumulativeScore = _currentHand.GetPointsForTeam(1);
+                _team2CumulativeScore = _currentHand.GetPointsForTeam(2);
                 if (OnScoreUpdate != null)
-                    OnScoreUpdate(team1CumulativeScore, team2CumulativeScore);
-                if (team1CumulativeScore >= 200 || team2CumulativeScore >= 200)
+                    OnScoreUpdate(_team1CumulativeScore, _team2CumulativeScore);
+                if (_team1CumulativeScore >= 200 || _team2CumulativeScore >= 200)
                 {
                     _isGameWon = true;
-                    if (team1CumulativeScore >= 200 && team2CumulativeScore >= 200)
+                    if (_team1CumulativeScore >= 200 && _team2CumulativeScore >= 200)
                         _winner = RuleHelpers.GetTeam(_currentHand.GetBidHolder());
                     else
                     {
-                        _winner = team1CumulativeScore > team2CumulativeScore ? 1 : 2;
+                        _winner = _team1CumulativeScore > _team2CumulativeScore ? 1 : 2;
                     }
                     DebugConsole.Log(_winner + " won");
                 }
