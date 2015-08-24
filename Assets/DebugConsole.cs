@@ -44,139 +44,138 @@ namespace Assets
 {
     public class DebugConsole : MonoBehaviour
     {
-        public GameObject DebugGui = null;             // The GUI that will be duplicated
-        public Vector3 defaultGuiPosition = new Vector3(0.01F, 0.98F, 0F);
-        public Vector3 defaultGuiScale = new Vector3(0.5F, 0.5F, 1F);
-        public Color normal = Color.green;
-        public Color warning = Color.yellow;
-        public Color error = Color.red;
-        public int maxMessages = 30;                   // The max number of messages displayed
-        public float lineSpacing = 0.02F;              // The amount of space between lines
-        public ArrayList messages = new ArrayList();
-        public ArrayList guis = new ArrayList();
-        public ArrayList colors = new ArrayList();
-        public bool draggable = true;                  // Can the output be dragged around at runtime by default? 
-        public bool visible = true;                    // Does output show on screen by default or do we have to enable it with code? 
-        public bool pixelCorrect = false; // set to be pixel Correct linespacing
-        public static bool isVisible
+        public GameObject DebugGui;             // The GUI that will be duplicated
+        public Vector3 DefaultGuiPosition = new Vector3(0.01F, 0.98F, 0F);
+        public Vector3 DefaultGuiScale = new Vector3(0.5F, 0.5F, 1F);
+        public Color Normal = Color.green;
+        public Color Warning = Color.yellow;
+        public Color Error = Color.red;
+        public int MaxMessages = 30;                   // The max number of messages displayed
+        public float LineSpacing = 0.02F;              // The amount of space between lines
+        public ArrayList Messages = new ArrayList();
+        public ArrayList Guis = new ArrayList();
+        public ArrayList Colors = new ArrayList();
+        public bool Draggable = true;                  // Can the output be dragged around at runtime by default? 
+        public bool Visible = true;                    // Does output show on screen by default or do we have to enable it with code? 
+        public bool PixelCorrect = false; // set to be pixel Correct linespacing
+        public static bool IsVisible
         {
             get
             {
-                return DebugConsole.instance.visible;
+                return Instance.Visible;
             }
 
             set
             {
-                DebugConsole.instance.visible = value;
-                if (value == true)
+                Instance.Visible = value;
+                if (value)
                 {
-                    DebugConsole.instance.Display();
+                    Instance.Display();
                 }
                 else if (value == false)
                 {
-                    DebugConsole.instance.ClearScreen();
+                    Instance.ClearScreen();
                 }
             }
         }
 
-        public static bool isDraggable
+        public static bool IsDraggable
         {
             get
             {
-                return DebugConsole.instance.draggable;
+                return Instance.Draggable;
             }
 
             set
             {
-                DebugConsole.instance.draggable = value;
+                Instance.Draggable = value;
 
             }
         }
 
 
-        private static DebugConsole s_Instance = null;   // Our instance to allow this script to be called without a direct connection.
-        public static DebugConsole instance
+        private static DebugConsole _sInstance;   // Our instance to allow this script to be called without a direct connection.
+        public static DebugConsole Instance
         {
             get
             {
-                if (s_Instance == null)
+                if (_sInstance == null)
                 {
-                    s_Instance = FindObjectOfType(typeof(DebugConsole)) as DebugConsole;
-                    if (s_Instance == null)
+                    _sInstance = FindObjectOfType(typeof(DebugConsole)) as DebugConsole;
+                    if (_sInstance == null)
                     {
-                        GameObject console = new GameObject();
+                        var console = new GameObject();
                         console.AddComponent<DebugConsole>();
                         console.name = "DebugConsoleController";
-                        s_Instance = FindObjectOfType(typeof(DebugConsole)) as DebugConsole;
-                        DebugConsole.instance.InitGuis();
+                        _sInstance = FindObjectOfType(typeof(DebugConsole)) as DebugConsole;
+                        Instance.InitGuis();
                     }
 
                 }
 
-                return s_Instance;
+                return _sInstance;
             }
         }
 
         void Awake()
         {
-            s_Instance = this;
+            _sInstance = this;
             InitGuis();
 
         }
 
-        protected bool guisCreated = false;
-        protected float screenHeight = -1;
+        protected bool GuisCreated;
+        protected float ScreenHeight = -1;
         public void InitGuis()
         {
-            float usedLineSpacing = lineSpacing;
-            screenHeight = Screen.height;
-            if (pixelCorrect)
-                usedLineSpacing = 1.0F / screenHeight * usedLineSpacing;
+            var usedLineSpacing = LineSpacing;
+            ScreenHeight = Screen.height;
+            if (PixelCorrect)
+                usedLineSpacing = 1.0F / ScreenHeight * usedLineSpacing;
 
-            if (guisCreated == false)
+            if (GuisCreated == false)
             {
                 if (DebugGui == null)  // If an external GUIText is not set, provide the default GUIText
                 {
                     DebugGui = new GameObject();
                     DebugGui.AddComponent<GUIText>();
                     DebugGui.name = "DebugGUI(0)";
-                    DebugGui.transform.position = defaultGuiPosition;
-                    DebugGui.transform.localScale = defaultGuiScale;
+                    DebugGui.transform.position = DefaultGuiPosition;
+                    DebugGui.transform.localScale = DefaultGuiScale;
                 }
 
                 // Create our GUI objects to our maxMessages count
-                Vector3 position = DebugGui.transform.position;
-                guis.Add(DebugGui);
-                int x = 1;
+                var position = DebugGui.transform.position;
+                Guis.Add(DebugGui);
+                var x = 1;
 
-                while (x < maxMessages)
+                while (x < MaxMessages)
                 {
                     position.y -= usedLineSpacing;
-                    GameObject clone = null;
-                    clone = (GameObject)Instantiate(DebugGui, position, transform.rotation);
+                    var clone = (GameObject)Instantiate(DebugGui, position, transform.rotation);
                     clone.name = string.Format("DebugGUI({0})", x);
-                    guis.Add(clone);
+                    Guis.Add(clone);
                     position = clone.transform.position;
                     x += 1;
                 }
 
                 x = 0;
-                while (x < guis.Count)
+                while (x < Guis.Count)
                 {
-                    GameObject temp = (GameObject)guis[x];
+                    var temp = (GameObject)Guis[x];
                     temp.transform.parent = DebugGui.transform;
                     x++;
                 }
-                guisCreated = true;
+                GuisCreated = true;
             }
             else
             {
                 // we're called on a screensize change, so fiddle with sizes
-                Vector3 position = DebugGui.transform.position;
-                for (int x = 0; x < guis.Count; x++)
+                var position = DebugGui.transform.position;
+                for (var x = 0; x < Guis.Count; x++)
                 {
                     position.y -= usedLineSpacing;
-                    GameObject temp = (GameObject)guis[x];
+                    var temp = (GameObject)Guis[x];
                     temp.transform.position = position;
                 }
             }
@@ -184,35 +183,33 @@ namespace Assets
 
 
 
-        bool connectedToMouse = false;
+        bool _connectedToMouse;
         void Update()
         {
             // If we are visible and the screenHeight has changed, reset linespacing
-            if (visible == true && screenHeight != Screen.height)
+            if (Visible && ScreenHeight != Screen.height)
             {
                 InitGuis();
             }
-            if (draggable == true)
+            if (Draggable)
             {
                 if (Input.GetMouseButtonDown(0))
                 {
-                    if (connectedToMouse == false && DebugGui.GetComponent<GUIText>().HitTest((Vector3)Input.mousePosition) == true)
+                    if (_connectedToMouse == false && DebugGui.GetComponent<GUIText>().HitTest(Input.mousePosition))
                     {
-                        connectedToMouse = true;
+                        _connectedToMouse = true;
                     }
-                    else if (connectedToMouse == true)
+                    else if (_connectedToMouse)
                     {
-                        connectedToMouse = false;
+                        _connectedToMouse = false;
                     }
 
                 }
 
-                if (connectedToMouse == true)
+                if (_connectedToMouse)
                 {
-                    float posX = DebugGui.transform.position.x;
-                    float posY = DebugGui.transform.position.y;
-                    posX = Input.mousePosition.x / Screen.width;
-                    posY = Input.mousePosition.y / Screen.height;
+                    var posX = Input.mousePosition.x / Screen.width;
+                    var posY = Input.mousePosition.y / Screen.height;
                     DebugGui.transform.position = new Vector3(posX, posY, 0F);
                 }
             }
@@ -221,18 +218,18 @@ namespace Assets
         //+++++++++ INTERFACE FUNCTIONS ++++++++++++++++++++++++++++++++
         public static void Log(string message, string color)
         {
-            DebugConsole.instance.AddMessage(message, color);
+            Instance.AddMessage(message, color);
 
         }
         //++++ OVERLOAD ++++
         public static void Log(string message)
         {
-            DebugConsole.instance.AddMessage(message);
+            Instance.AddMessage(message);
         }
 
         public static void Clear()
         {
-            DebugConsole.instance.ClearMessages();
+            Instance.ClearMessages();
         }
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -243,8 +240,8 @@ namespace Assets
 
         public void AddMessage(string message, string color)
         {
-            messages.Add(message);
-            colors.Add(color);
+            Messages.Add(message);
+            Colors.Add(color);
             Display();
         }
         //++++++++++ OVERLOAD for AddMessage ++++++++++++++++++++++++++++
@@ -252,8 +249,8 @@ namespace Assets
         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         public void AddMessage(string message)
         {
-            messages.Add(message);
-            colors.Add("normal");
+            Messages.Add(message);
+            Colors.Add("normal");
             Display();
         }
 
@@ -263,8 +260,8 @@ namespace Assets
         //---------------------------------------------------------------
         public void ClearMessages()
         {
-            messages.Clear();
-            colors.Clear();
+            Messages.Clear();
+            Colors.Clear();
             ClearScreen();
         }
 
@@ -274,16 +271,16 @@ namespace Assets
         //--------------------------------------------------------------
         void ClearScreen()
         {
-            if (guis.Count < maxMessages)
+            if (Guis.Count < MaxMessages)
             {
                 //do nothing as we haven't created our guis yet
             }
             else
             {
-                int x = 0;
-                while (x < guis.Count)
+                var x = 0;
+                while (x < Guis.Count)
                 {
-                    GameObject gui = (GameObject)guis[x];
+                    var gui = (GameObject)Guis[x];
                     gui.GetComponent<GUIText>().text = "";
                     //increment and loop
                     x += 1;
@@ -298,18 +295,18 @@ namespace Assets
         void Prune()
         {
             int diff;
-            if (messages.Count > maxMessages)
+            if (Messages.Count > MaxMessages)
             {
-                if (messages.Count <= 0)
+                if (Messages.Count <= 0)
                 {
                     diff = 0;
                 }
                 else
                 {
-                    diff = messages.Count - maxMessages;
+                    diff = Messages.Count - MaxMessages;
                 }
-                messages.RemoveRange(0, (int)diff);
-                colors.RemoveRange(0, (int)diff);
+                Messages.RemoveRange(0, diff);
+                Colors.RemoveRange(0, diff);
             }
 
         }
@@ -320,47 +317,47 @@ namespace Assets
         void Display()
         {
             //check if we are set to display
-            if (visible == false)
+            if (Visible == false)
             {
                 ClearScreen();
             }
-            else if (visible == true)
+            else if (Visible)
             {
 
 
-                if (messages.Count > maxMessages)
+                if (Messages.Count > MaxMessages)
                 {
                     Prune();
                 }
 
                 // Carry on with display
-                int x = 0;
-                if (guis.Count < maxMessages)
+                var x = 0;
+                if (Guis.Count < MaxMessages)
                 {
                     //do nothing as we havent created our guis yet
                 }
                 else
                 {
-                    while (x < messages.Count)
+                    while (x < Messages.Count)
                     {
-                        GameObject gui = (GameObject)guis[x];
+                        var gui = (GameObject)Guis[x];
 
                         //set our color
-                        switch ((string)colors[x])
+                        switch ((string)Colors[x])
                         {
                             case "normal":
-                                gui.GetComponent<GUIText>().material.color = normal;
+                                gui.GetComponent<GUIText>().material.color = Normal;
                                 break;
                             case "warning":
-                                gui.GetComponent<GUIText>().material.color = warning;
+                                gui.GetComponent<GUIText>().material.color = Warning;
                                 break;
                             case "error":
-                                gui.GetComponent<GUIText>().material.color = error;
+                                gui.GetComponent<GUIText>().material.color = Error;
                                 break;
                         }
 
                         //now set the text for this element
-                        gui.GetComponent<GUIText>().text = (string)messages[x];
+                        gui.GetComponent<GUIText>().text = (string)Messages[x];
 
                         //increment and loop
                         x += 1;

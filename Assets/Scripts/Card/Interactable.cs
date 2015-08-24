@@ -8,7 +8,7 @@ namespace Assets.Scripts.Card
         {
             MouseOver,
             MouseExit,
-            MouseDown,
+            MouseDown
         }
 
         public delegate void CardEvent(CardEventType type, ICard card);
@@ -20,10 +20,10 @@ namespace Assets.Scripts.Card
             NotifyCardEvent(CardEventType.MouseDown);
         }
 
-        private ICard card;
+        private ICard _card;
         void Awake()
         {
-            card = GetComponent<ICard>();
+            _card = GetComponent<ICard>();
             _orignialScale = transform.localScale;
         }
         private Vector3 _orignialScale;
@@ -39,7 +39,7 @@ namespace Assets.Scripts.Card
 
         private void NotifyCardEvent(CardEventType type)
         {
-            if (OnCardEvent != null) OnCardEvent(type, card);
+            if (OnCardEvent != null) OnCardEvent(type, _card);
         }
     }
 }

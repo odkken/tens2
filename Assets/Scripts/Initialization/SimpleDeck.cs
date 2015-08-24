@@ -11,7 +11,6 @@ namespace Assets.Scripts.Initialization
 
         public SimpleDeck(IEnumerable<ICard> cards)
         {
-            cards.ToList().ForEach(a => a.Movable.Flip(FlipState.FaceDown, false));
             _cards = new Queue<ICard>(cards);
         }
 

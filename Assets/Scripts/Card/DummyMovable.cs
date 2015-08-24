@@ -29,14 +29,22 @@ namespace Assets.Scripts.Card
 
         }
 
-        public void Flip(FlipState state, bool localOnly)
+        public void Flip(FlipState state)
         {
         }
 
-        public void MoveTo(Vector3 position, Action onFinishedMoving = null)
+        public void MoveTo(Vector3 position, float delay, float inSeconds, Action onFinishedMoving)
         {
-            if (onFinishedMoving != null)
-                onFinishedMoving();
+            throw new NotImplementedException();
+        }
+
+        public void MoveToInstant(Vector3 position)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void MoveTo(Vector3 position)
+        {
         }
 
         public bool IsMoving { get { return false; } }

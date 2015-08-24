@@ -4,6 +4,7 @@ using System.Linq;
 using Assets.Scripts.Card;
 using Assets.Scripts.Player;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Assets.Scripts
 {
@@ -23,6 +24,10 @@ namespace Assets.Scripts
             public Suit TrumpSuit;
         }
 
+        public static int GetTeam(IPlayer player)
+        {
+            return player.Position == Position.North || player.Position == Position.South ? 1 : 2;
+        }
 
         public static Vector3 GetHandPosition(Position pos)
         {
@@ -86,7 +91,7 @@ namespace Assets.Scripts
 
         public static bool IsCardLocalPlayers(ICard card)
         {
-            var allPlayers = UnityEngine.Object.FindObjectsOfType<FourPlayer>();
+            var allPlayers = Object.FindObjectsOfType<FourPlayer>();
             var playerWhoOwnsCard = allPlayers.FirstOrDefault(a => a.HasCard(card));
             return playerWhoOwnsCard != null && playerWhoOwnsCard.isLocalPlayer;
         }

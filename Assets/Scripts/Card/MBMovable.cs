@@ -1,24 +1,25 @@
 ﻿using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Assets.Scripts.Card
 {
-    class MBMovable : NetworkBehaviour, IMovable
+    class MBMovable : MonoBehaviour, IMovable
     {
         private bool _isStateLocked;
 
-        private Vector3 normalScale;
+        private Vector3 _normalScale;
         void Awake()
         {
-            normalScale = transform.localScale;
-            Flip(FlipState.FaceDown, true);
+            _normalScale = transform.localScale;
+            Flip(FlipState.FaceDown);
             transform.rotation = Quaternion.LookRotation(Vector3.forward);
         }
 
         public void Orient(Vector3 forward)
         {
-            switch (currentState)
+            switch (_currentState)
             {
                 case FlipState.FaceUp:
                     transform.rotation = Quaternion.LookRotation(Vector3.back, forward);
@@ -31,23 +32,6 @@ namespace Assets.Scripts.Card
             }
         }
 
-
-        public void MoveTo(Vector3 position, Action onFinishedMoving = null)
-        {
-            if (isServer)
-                RpcMove(position);
-            transform.position = position;
-            if (onFinishedMoving != null)
-                onFinishedMoving();
-        }
-
-        [ClientRpc]
-        void RpcMove(Vector3 pos)
-        {
-            transform.position = pos;
-        }
-
-
         public void LockFlipState()
         {
             _isStateLocked = true;
@@ -55,46 +39,74 @@ namespace Assets.Scripts.Card
 
         public void Grow()
         {
-            transform.localScale = normalScale * 1.1f;
+            transform.localScale = _normalScale * 1.1f;
         }
 
         public void Shrink()
         {
-            transform.localScale = normalScale;
+            transform.localScale = _normalScale;
         }
 
         public void Tilt(float angle)
         {
-            transform.RotateAround(transform.position, -transform.forward, angle);
+            transform.RotateAround(transform.position, transform.forward, angle);
         }
 
-        private FlipState currentState;
+        private FlipState _currentState;
 
-        public void Flip(FlipState state, bool localOnly)
+        public void Flip(FlipState state)
         {
-            if (!isServer)
-                flipForReal(state);
-            else
+            FlipForReal(state);
+        }
+
+        public void MoveTo(Vector3 position, float delay, float inSeconds, Action onFinishedMoving)
+        {
+            StartCoroutine(AnimateMove(position, delay, inSeconds, onFinishedMoving));
+        }
+
+        public void MoveToInstant(Vector3 position)
+        {
+            transform.position = position;
+        }
+
+        IEnumerator AnimateMove(Vector3 newPosition, float delay, float seconds, Action onFinishedAction)
+        {
+            moving = true;
+            var t0 = 0f;
+            while (t0 < delay)
             {
-                if (localOnly)
-                    flipForReal(state);
-                else
-                    RpcFlip(state);
+                t0 += Time.deltaTime;
+                yield return null;
             }
+
+            var startPos = transform.position;
+            var timeFraction = 0f;
+            while (timeFraction < 1)
+            {
+                timeFraction += Time.deltaTime / seconds;
+                transform.position = Vector3.Lerp(startPos, newPosition, Mathf.Log10(timeFraction * 9 + 1));
+                yield return null;
+            }
+            transform.position = newPosition;
+            moving = false;
+            if (onFinishedAction != null)
+                onFinishedAction();
         }
 
-        [ClientRpc]
-        void RpcFlip(FlipState state)
-        {
-            flipForReal(state);
-        }
+        private bool moving;
 
-        private void flipForReal(FlipState state)
+        //[ClientRpc]
+        //void RpcFlip(FlipState state)
+        //{
+        //    FlipForReal(state);
+        //}
+
+        private void FlipForReal(FlipState state)
         {
-            if (currentState == state)
+            if (_currentState == state)
                 return;
             transform.RotateAround(transform.position, transform.up, 180);
-            currentState = state;
+            _currentState = state;
         }
 
 

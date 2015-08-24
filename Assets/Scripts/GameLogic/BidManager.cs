@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Player;
-using UnityEngine;
 
 namespace Assets.Scripts.GameLogic
 {
@@ -24,22 +23,27 @@ namespace Assets.Scripts.GameLogic
             _onBidsCompletedAction = onBidsCompletedAction;
         }
 
-        private IPlayer lastBidder;
+        private IPlayer _lastBidder;
         public void Tick()
         {
             if (_biddingFinished || _waitingOnPlayer)
                 return;
 
-            var bidder = lastBidder == null ? _players.Single(a => a.Id == _firstPlayerToBid) : _players.Where(a => !_playerBids.ContainsKey(a.Id) || _playerBids[a.Id] != 0).ToList().GetFrom(lastBidder, 1);
+            var bidder = _lastBidder == null ? _players.Single(a => a.Id == _firstPlayerToBid) : _players.Where(a => !_playerBids.ContainsKey(a.Id) || _playerBids[a.Id] != 0).ToList().GetFrom(_lastBidder, 1);
             _waitingOnPlayer = true;
             DebugConsole.Log("Asking for bid from " + bidder.Name);
-            bidder.GetNextBid(_numBids == 0 ? 50 : Math.Max(_playerBids.Values.Max() + 5, 50), OnBid);
+            IPlayer currentHolder = null;
+            if (_playerBids.Any(a => a.Value != 0))
+            {
+                currentHolder = _players.Single(a => a.Id == _playerBids.Single(b => b.Value == _playerBids.Values.Max()).Key);
+            }
+            bidder.GetNextBid(_numBids == 0 ? 50 : Math.Max(_playerBids.Values.Max() + 5, 50), currentHolder != null ? currentHolder.Name : "Minimum", OnBid);
         }
 
         private void OnBid(int amount, IPlayer player)
         {
             _waitingOnPlayer = false;
-            lastBidder = player;
+            _lastBidder = player;
             _numBids++;
 
             if (!_playerBids.ContainsKey(player.Id))

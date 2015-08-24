@@ -15,8 +15,9 @@ namespace Assets.Scripts.Card
         void Grow();
         void Shrink();
         void Tilt(float angle);
-        void Flip(FlipState state, bool localOnly);
-        void MoveTo(Vector3 position, Action onFinishedMoving = null);
+        void Flip(FlipState state);
+        void MoveTo(Vector3 position, float delay, float inSeconds, Action onFinishedMoving = null);
+        void MoveToInstant(Vector3 position);
         bool IsMoving { get; }
         Vector3 CurrentPosition { get; }
     }

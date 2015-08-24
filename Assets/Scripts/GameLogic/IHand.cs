@@ -15,6 +15,6 @@ namespace Assets.Scripts.GameLogic
         /// </summary>
         /// <param name="playerId"></param>
         /// <returns></returns>
-        int GetPointsForPlayer(int playerId);
+        int GetPointsForTeam(int playerId);
     }
 }

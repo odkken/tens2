@@ -16,13 +16,14 @@ namespace Assets.Scripts.GameLogic
         private int _firstPlayerToBid;
         private IHandFactory _handFactory;
         private List<int> _shuffleSeeds;
-        private readonly Action<IPlayer> _onFinished;
-        private Dictionary<int, int> _cumulativeScores;
+        private readonly Action<int> _onFinished;
+        private int team1CumulativeScore;
+        private int team2CumulativeScore;
         private IHand _currentHand;
         private bool _isGameWon;
-        private IPlayer _winner;
+        private int _winner;
         private int _numHandsPlayed;
-        private bool playersSeated;
+        private bool _playersSeated;
         private readonly List<IPlayer> _players = new List<IPlayer>();
         // Use this for initialization
         void Start()
@@ -37,14 +38,14 @@ namespace Assets.Scripts.GameLogic
 
             FourPlayer.OnPlayerJoined += player =>
             {
-                DebugConsole.Log(string.Format("player {0} joined", player.Id));
+                DebugConsole.Log(String.Format("player {0} joined", player.Id));
                 _players.Add(player);
 
             };
             FourPlayer.OnPlayerLeft += player =>
             {
 
-                DebugConsole.Log(string.Format("player {0} left", player.Id));
+                DebugConsole.Log(String.Format("player {0} left", player.Id));
                 _players.Remove(player);
             };
 
@@ -52,48 +53,57 @@ namespace Assets.Scripts.GameLogic
             {
                 DebugConsole.Log("All Players Seated, starting game.");
                 _firstPlayerToBid = _players.Shuffle(new Random()).First().Id;
-                _cumulativeScores = new Dictionary<int, int>();
-                foreach (var player in _players)
-                {
-                    _cumulativeScores.Add(player.Id, 0);
-                }
-                playersSeated = true;
+                _playersSeated = true;
             };
         }
 
 
+        public delegate void ScoreUpdate(int team1Score, int team2Score);
+        public static event ScoreUpdate OnScoreUpdate;
+
+
+        private bool loggedFinish = false;
+        private float finishTime;
         void Update()
         {
             if (_isGameWon)
                 return;
 
-            if (!playersSeated)
+            if (!_playersSeated)
                 return;
 
             if (_currentHand == null)
             {
                 DebugConsole.Log("Starting new hand...");
-                _currentHand = _handFactory.GetNewHand(_players, _players.GetFrom(_players.Single(a => a.Id == _firstPlayerToBid), _numHandsPlayed).Id, _cumulativeScores);
+                _currentHand = _handFactory.GetNewHand(_players, _players.GetFrom(_players.Single(a => a.Id == _firstPlayerToBid), _numHandsPlayed).Id, team1CumulativeScore, team2CumulativeScore);
             }
 
             if (_currentHand.IsHandFinished())
             {
+                if (!loggedFinish)
+                {
+                    finishTime = Time.time;
+                    loggedFinish = true;
+                }
+            }
+            if (loggedFinish && Time.time - finishTime > 5)
+            {
+                loggedFinish = false;
                 _numHandsPlayed++;
-                foreach (var player in _players)
-                {
-                    _cumulativeScores[player.Id] = _currentHand.GetPointsForPlayer(player.Id);
-                }
-
-                if (_cumulativeScores.Count(a => a.Value >= 200) > 1)
+                team1CumulativeScore = _currentHand.GetPointsForTeam(1);
+                team2CumulativeScore = _currentHand.GetPointsForTeam(2);
+                if (OnScoreUpdate != null)
+                    OnScoreUpdate(team1CumulativeScore, team2CumulativeScore);
+                if (team1CumulativeScore >= 200 || team2CumulativeScore >= 200)
                 {
                     _isGameWon = true;
-                    _winner = _currentHand.GetBidHolder();
+                    if (team1CumulativeScore >= 200 && team2CumulativeScore >= 200)
+                        _winner = RuleHelpers.GetTeam(_currentHand.GetBidHolder());
+                    else
+                    {
+                        _winner = team1CumulativeScore > team2CumulativeScore ? 1 : 2;
+                    }
                     DebugConsole.Log(_winner + " won");
-                }
-                else if (_cumulativeScores.Any(a => a.Value >= 200))
-                {
-                    _isGameWon = true;
-                    _winner = _players.Single(a => a.Id == _cumulativeScores.Single(b => b.Value == _cumulativeScores.Max(c => c.Value)).Key);
                 }
                 else
                 {

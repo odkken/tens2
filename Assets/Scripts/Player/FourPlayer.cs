@@ -1,19 +1,18 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Assets.Scripts.Card;
+using Assets.Scripts.GameLogic;
 using Assets.Scripts.UI;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.UI;
 
 namespace Assets.Scripts.Player
 {
     public class FourPlayer : NetworkBehaviour, IPlayer
     {
-        private List<ICard> playedCards = new List<ICard>();
+        private List<ICard> _playedCards = new List<ICard>();
         private void Start()
         {
             Id = (int)netId.Value;
@@ -21,13 +20,13 @@ namespace Assets.Scripts.Player
             if (OnPlayerJoined != null)
                 OnPlayerJoined(this);
 
-            _organizer = new CardOrganizer(GetComponent<NetworkIdentity>().isLocalPlayer, 10, .5f, .45f, 20);
+            _organizer = new CardOrganizer(isLocalPlayer, 10, .5f, .45f, 0);
 
             BidGui.OnBidSubmitted += bid =>
             {
-                if (!isMyTurnToBid || !isLocalPlayer) return;
+                if (!_isMyTurnToBid || !isLocalPlayer) return;
                 CmdBid(bid);
-                isMyTurnToBid = false;
+                _isMyTurnToBid = false;
                 FindObjectOfType<BidGui>().Hide();
             };
 
@@ -41,22 +40,25 @@ namespace Assets.Scripts.Player
                     Camera.main.transform.rotation = Quaternion.LookRotation(Vector3.forward, -RuleHelpers.GetHandPosition(pos));
                 }
             };
-
+            FourPlayerGameManager.OnScoreUpdate += (i, score) =>
+            {
+                RpcGotScores(i, score);
+            };
             Interactable.OnCardEvent += (type, card) =>
             {
-                if (!_isMyPlayTurn || !isLocalPlayer || playedCards.Contains(card))
+                if (!_isMyPlayTurn || !isLocalPlayer || _playedCards.Contains(card))
                     return;
                 switch (type)
                 {
                     case Interactable.CardEventType.MouseOver:
-                        if (RuleHelpers.IsValidPlay(card, HandCards.Except(playedCards).ToList(), _currentRoundInfo))
+                        if (RuleHelpers.IsValidPlay(card, HandCards.Except(_playedCards).ToList(), _currentRoundInfo))
                             card.Movable.Grow();
                         break;
                     case Interactable.CardEventType.MouseExit:
                         card.Movable.Shrink();
                         break;
                     case Interactable.CardEventType.MouseDown:
-                        if (RuleHelpers.IsValidPlay(card, HandCards.Except(playedCards).ToList(), _currentRoundInfo))
+                        if (RuleHelpers.IsValidPlay(card, HandCards.Except(_playedCards).ToList(), _currentRoundInfo))
                         {
                             _isMyPlayTurn = false;
                             CmdPickedCard(card.ID);
@@ -82,6 +84,16 @@ namespace Assets.Scripts.Player
 
         public static event PlayerJoinOrLeave OnPlayerJoined;
         public static event PlayerJoinOrLeave OnPlayerLeft;
+
+
+
+        [ClientRpc]
+        void RpcGotScores(int team1Score, int team2Score)
+        {
+            if (!isLocalPlayer)
+                return;
+            FindObjectOfType<ScoreDisplay>().UpdateScores(team1Score, team2Score, RuleHelpers.GetTeam(this));
+        }
         public List<ICard> HandCards = new List<ICard>();
 
         private bool _isMyPlayTurn;
@@ -110,20 +122,21 @@ namespace Assets.Scripts.Player
         public void ClearCards()
         {
             HandCards.Clear();
-            playedCards.Clear();
+            _playedCards.Clear();
             RpcClearCards();
         }
 
         [ClientRpc]
         private void RpcClearCards()
         {
-            playedCards.Clear();
+            _playedCards.Clear();
             HandCards.Clear();
         }
 
         [ClientRpc]
         private void RpcGiveCards(int[] cardIds)
         {
+            DebugConsole.Log(Name + " given cards RPC");
             StartCoroutine(WaitForCardsToSpawn(cardIds));
         }
 
@@ -141,19 +154,25 @@ namespace Assets.Scripts.Player
             HandCards =
                 new List<ICard>(
                     FindObjectsOfType<MBCard>().Where(a => cardIds.Contains(a.ID)).Select(a => a.GetComponent<ICard>()));
+            foreach (var handCard in HandCards)
+            {
+                handCard.Movable.Shrink();
+                handCard.Movable.MoveToInstant(Vector3.zero);
+            }
             _organizer.OrganizeHandCards(HandCards, Position);
         }
 
         private Action<int, IPlayer> _bidAction;
-        private bool isMyTurnToBid;
-        private int minBid;
+        private bool _isMyTurnToBid;
+        private int _minBid;
 
-        public void GetNextBid(int minimum, Action<int, IPlayer> onBidAction)
+        public void GetNextBid(int minimum, string currentHolder, Action<int, IPlayer> onBidAction)
         {
             _bidAction = onBidAction;
             DebugConsole.Log(Name + " prompted for bid, asking them.");
-            RpcPromptBid(minimum);
+            RpcPromptBid(minimum, currentHolder);
         }
+
 
         public bool HasCard(ICard card)
         {
@@ -161,19 +180,19 @@ namespace Assets.Scripts.Player
         }
 
         [ClientRpc]
-        private void RpcPromptBid(int minBid)
+        private void RpcPromptBid(int minBid, string currentHolder)
         {
             if (!isLocalPlayer)
                 return;
             DebugConsole.Log(Name + " received prompt to bid");
-            isMyTurnToBid = true;
+            _isMyTurnToBid = true;
             var bidGui = FindObjectOfType<BidGui>();
             bidGui.Show();
-            bidGui.SetMinBid(minBid);
-            if (bot)
+            bidGui.SetMinBid(minBid, currentHolder);
+            if (_bot)
             {
                 CmdBid(minBid > 60 ? 0 : minBid);
-                isMyTurnToBid = false;
+                _isMyTurnToBid = false;
                 FindObjectOfType<BidGui>().Hide();
             }
         }
@@ -227,7 +246,7 @@ namespace Assets.Scripts.Player
                 trumpSuit);
         }
 
-        private bool bot = true;
+        private bool _bot = true;
 
         private RuleHelpers.RoundInfo _currentRoundInfo;
 
@@ -245,31 +264,51 @@ namespace Assets.Scripts.Player
                 TrumpSuit = trumpSuit
             };
 
-            if (bot)
+            if (_bot)
             {
                 _isMyPlayTurn = false;
-                CmdPickedCard(HandCards.First(a => RuleHelpers.IsValidPlay(a, HandCards.Except(playedCards).ToList(), _currentRoundInfo)).ID);
+                CmdPickedCard(HandCards.First(a => RuleHelpers.IsValidPlay(a, HandCards.Except(_playedCards).ToList(), _currentRoundInfo)).ID);
             }
 
+        }
+
+
+        public void PutCardOnTable(ICard card)
+        {
+            RpcPutCardOnTable(card.ID);
+        }
+
+        public void TakeWonCards(List<ICard> cards)
+        {
+            RpcTakeWonCards(cards.Select(a => a.ID).ToArray());
+        }
+
+        [ClientRpc]
+        private void RpcTakeWonCards(int[] ids)
+        {
+            var cards = FindObjectsOfType<MBCard>().Where(a => ids.Contains(a.ID));
+            foreach (var mbCard in cards)
+            {
+                mbCard.Movable.MoveTo(RuleHelpers.GetHandPosition(Position) * 1, 1, 2, () => mbCard.Movable.Flip(FlipState.FaceDown));
+            }
         }
 
         [Command]
         private void CmdPickedCard(int id)
         {
             var card = HandCards.Single(a => a.ID == id);
-            HandCards.Remove(card);
+            _playedCards.Add(card);
             _playAction(card, this);
-            RpcPutCardOnTable(card.ID);
         }
 
         [ClientRpc]
         private void RpcPutCardOnTable(int id)
         {
-            var card = FindObjectsOfType<MBCard>().Single(a => a.ID == id);
-            playedCards.Add(card);
-            _organizer.OrganizeHandCards(HandCards.Except(playedCards).ToList(), Position);
-            card.Movable.MoveTo(RuleHelpers.GetHandPosition(Position) * .1f);
-            card.Movable.Flip(FlipState.FaceUp, true);
+            var card = HandCards.Single(a => a.ID == id);
+            _playedCards.Add(card);
+            _organizer.OrganizeHandCards(HandCards.Except(_playedCards).ToList(), Position);
+            card.Movable.MoveTo(RuleHelpers.GetHandPosition(Position) * .1f, 0, .3f);
+            card.Movable.Flip(FlipState.FaceUp);
         }
     }
 }

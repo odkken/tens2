@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using Assets.Scripts.Card;
 using Assets.Scripts.Player;
 using UnityEngine;
@@ -9,7 +8,7 @@ namespace Assets.Scripts.GameLogic
 {
     public class SimpleRound : IRound
     {
-        private readonly Dictionary<int, List<ICard>> _cardsPlayed;
+        private readonly Dictionary<int, ICard> _cardsPlayed;
         private readonly List<IPlayer> _players;
         private readonly int _startPlayerId;
         private bool _isWaitingOnPlayer;
@@ -23,10 +22,10 @@ namespace Assets.Scripts.GameLogic
             _startPlayerId = startPlayerId;
             _trumpSuit = trumpSuit;
             _trumpDetermined = true;
-            _cardsPlayed = new Dictionary<int, List<ICard>>();
+            _cardsPlayed = new Dictionary<int, ICard>();
             foreach (var player in players)
             {
-                _cardsPlayed.Add(player.Id, new List<ICard>());
+                _cardsPlayed.Add(player.Id, null);
             }
         }
 
@@ -34,47 +33,44 @@ namespace Assets.Scripts.GameLogic
         {
             _players = players;
             _startPlayerId = startPlayerId;
-            _cardsPlayed = new Dictionary<int, List<ICard>>();
+            _cardsPlayed = new Dictionary<int, ICard>();
             foreach (var player in players)
             {
-                _cardsPlayed.Add(player.Id, new List<ICard>());
+                _cardsPlayed.Add(player.Id, null);
             }
         }
 
-        private bool cardsCleanedUp = false;
+        private bool _cardsCleanedUp;
 
         public bool IsRoundFinished()
         {
-            return _cardsPlayed.Values.SelectMany(a => a).Count() == 4;
+            return _cardsPlayed.Values.All(a => a != null);
         }
 
         public void Tick()
         {
-            if (IsRoundFinished() && !cardsCleanedUp)
-                CleanUpCards();
             if (IsRoundFinished() || _isWaitingOnPlayer) return;
 
             _isWaitingOnPlayer = true;
             var player = _players.GetFrom(_players.Single(a => a.Id == _startPlayerId),
-                _cardsPlayed.Values.SelectMany(a => a).Count());
+                _cardsPlayed.Values.Count(a => a != null));
             DebugConsole.Log(player.Name + "'s turn to play");
-            player.PlayCard(_cardsPlayed.Values.SelectMany(a => a).ToList(), _playedSuit, _trumpSuit, OnPlayCardCallback);
+            player.PlayCard(_cardsPlayed.Values.Where(a => a != null).ToList(), _playedSuit, _trumpSuit, OnPlayCardCallback);
         }
 
         private void CleanUpCards()
         {
-            foreach (var card in _cardsPlayed.SelectMany(a => a.Value))
-            {
-                card.Movable.MoveTo(new Vector3(50000, 0, 0));
-            }
-            cardsCleanedUp = true;
+            DebugConsole.Log("telling " + GetWinner().Name + " to clean up cards");
+            GetWinner().TakeWonCards(_cardsPlayed.Values.ToList());
+            _cardsCleanedUp = true;
         }
 
         public IPlayer GetWinner()
         {
-            var winningCard = RuleHelpers.GetWinningCard(_cardsPlayed.Values.SelectMany(a => a).ToList(), _trumpSuit,
-                _playedSuit);
-            return _players.Single(a => a.Id == _cardsPlayed.Single(b => b.Value.Contains(winningCard)).Key);
+            if (!IsRoundFinished())
+                return null;
+            var winningCard = RuleHelpers.GetWinningCard(_cardsPlayed.Values.ToList(), _trumpSuit, _playedSuit);
+            return _players.Single(a => a.Id == _cardsPlayed.Single(b => b.Value == winningCard).Key);
         }
 
         public bool HaveCardsBeenPlayed()
@@ -89,12 +85,13 @@ namespace Assets.Scripts.GameLogic
 
         public int GetWinnersPoints()
         {
-            return RuleHelpers.GetPointValue(_cardsPlayed.Values.SelectMany(a => a).ToList());
+            return RuleHelpers.GetPointValue(_cardsPlayed.Values.ToList());
         }
 
         private void OnPlayCardCallback(ICard card, IPlayer player)
         {
-            if (!_cardsPlayed.Values.SelectMany(a => a).Any())
+            player.PutCardOnTable(card);
+            if (_cardsPlayed.Values.All(a => a == null))
             {
                 _playedSuit = card.Suit;
                 if (!_trumpDetermined)
@@ -103,10 +100,10 @@ namespace Assets.Scripts.GameLogic
                     _trumpDetermined = true;
                 }
             }
-            _cardsPlayed[player.Id].Add(card);
+            _cardsPlayed[player.Id] = card;
             _isWaitingOnPlayer = false;
-            card.Movable.MoveTo(RuleHelpers.GetHandPosition(player.Position) * .1f);
-            card.Movable.Flip(FlipState.FaceUp, true);
+            if (IsRoundFinished() && !_cardsCleanedUp)
+                CleanUpCards();
         }
     }
 }

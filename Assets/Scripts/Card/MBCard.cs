@@ -25,7 +25,7 @@ namespace Assets.Scripts.Card
                 OnClicked(this);
         }
 
-        void Start()
+        void Awake()
         {
             Movable = GetComponent<IMovable>();
         }

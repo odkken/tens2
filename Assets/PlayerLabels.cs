@@ -18,7 +18,7 @@ namespace Assets
             transform.position = Vector3.zero;
 
             var players = FindObjectsOfType<FourPlayer>();
-            //var localPlayer = players.Single(a => a.isLocalPlayer);
+            var localPlayer = players.Single(a => a.isLocalPlayer);
 
             var children = new List<Transform>();
             for (int i = 0; i < transform.childCount; i++)
@@ -26,12 +26,13 @@ namespace Assets
                 children.Add(transform.GetChild(i));
             }
 
-            transform.rotation.eulerAngles.Set(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, -Camera.main.transform.eulerAngles.z);
+            transform.rotation = Quaternion.LookRotation(Vector3.forward, Vector3.up);
             foreach (var child in children)
             {
-                child.rotation.eulerAngles.Set(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, -Camera.main.transform.eulerAngles.z);
+                child.rotation = Quaternion.LookRotation(Vector3.forward, Camera.main.transform.up);
                 child.GetComponent<Text>().text = players.Single(a => a.Position.ToString() == child.name).Name;
             }
+            transform.FindChild(localPlayer.Position.ToString()).GetComponent<Text>().text = "";
         }
 
         public void Hide()

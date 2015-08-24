@@ -24,12 +24,8 @@ namespace Assets.Scripts.Initialization
                 card.GetComponent<MBCard>().Initialize(rank, suit);
                 return card.GetComponent<MBCard>();
             }
-            else
-            {
-                card.GetComponent<NonNetworkedMBCard>().Initialize(rank, suit);
-                return card.GetComponent<NonNetworkedMBCard>();
-            }
-
+            card.GetComponent<NonNetworkedMBCard>().Initialize(rank, suit);
+            return card.GetComponent<NonNetworkedMBCard>();
         }
     }
 }

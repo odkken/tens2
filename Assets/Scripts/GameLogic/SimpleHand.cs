@@ -13,8 +13,8 @@ namespace Assets.Scripts.GameLogic
         private readonly IBidManagerFactory _bidManagerFactory;
         private readonly List<IPlayer> _players;
         private readonly IDeck _deck;
-        private readonly Dictionary<int, int> _playerScores = new Dictionary<int, int>();
-        private readonly Dictionary<int, int> _previousPlayerScores;
+        private Dictionary<int, int> _previousTeamScores;
+        private Dictionary<int, int> _teamScores;
         private readonly IRoundFactory _roundFactory;
         private bool _biddingPrompted;
         private IBidManager _bidManager;
@@ -23,20 +23,17 @@ namespace Assets.Scripts.GameLogic
         private int _numRoundsPlayed;
         private int _startPlayerId;
 
-        public SimpleHand(IRoundFactory roundFactory, List<IPlayer> players, IDeck deck, Dictionary<int, int> previousPlayerScores,
+        public SimpleHand(IRoundFactory roundFactory, List<IPlayer> players, IDeck deck, int team1PreviousScore, int team2PreviousScore,
             IBidManagerFactory bidManagerFactory, int startPlayerId)
         {
             _roundFactory = roundFactory;
             _players = players;
             _deck = deck;
-            _previousPlayerScores = previousPlayerScores;
+            _previousTeamScores = new Dictionary<int, int> { { 1, team1PreviousScore }, { 2, team2PreviousScore } };
+            _teamScores = new Dictionary<int, int> { { 1, 0 }, { 2, 0 } };
             _bidManagerFactory = bidManagerFactory;
             _startPlayerId = startPlayerId;
 
-            foreach (var player in _players)
-            {
-                _playerScores.Add(player.Id, 0);
-            }
             DealCards();
 
             DebugConsole.Log("cards dealt, starting new hand");
@@ -56,7 +53,6 @@ namespace Assets.Scripts.GameLogic
                 player.GiveCards(theirCards);
             }
         }
-
 
         public void Tick()
         {
@@ -92,28 +88,51 @@ namespace Assets.Scripts.GameLogic
 
             if (_currentRound.IsRoundFinished())
             {
+
                 _numRoundsPlayed++;
                 DebugConsole.Log("round " + _numRoundsPlayed + " finished");
                 TallyScores(_currentRound);
                 if (IsHandFinished())
                 {
-                    foreach (var player in _players)
+                    var t1prior = _previousTeamScores[1];
+                    var t2prior = _previousTeamScores[2];
+
+                    var t1ThisHand = _teamScores[1];
+                    var t2ThisHand = _teamScores[2];
+                    Debug.LogFormat("t1 prior: {0}, t2 prior: {1}", t1prior, t2prior);
+                    Debug.LogFormat("t1 this Hand: {0}, t2 this Hand: {1}", t1ThisHand, t2ThisHand);
+
+                    var heldBid = _bids.Values.Max();
+                    var bidHoldingTeam = RuleHelpers.GetTeam(_players.Single(a => a.Id == _bids.Single(b => b.Value == heldBid).Key));
+                    Debug.LogFormat("team {0} held the bid at {1}", bidHoldingTeam, heldBid);
+                    var holdersScoreThisHand = _teamScores[bidHoldingTeam];
+                    if (holdersScoreThisHand < heldBid)
                     {
-                        var bid = _bids[player.Id];
-                        var scoreThisHand = _playerScores[player.Id];
-                        var previousPoints = _previousPlayerScores[player.Id];
-                        var isBidHolder = bid == _bids.Keys.Max();
-                        if (isBidHolder)
-                        {
-                            if (scoreThisHand < bid)
-                                _playerScores[player.Id] = previousPoints - bid;
-                            else
-                                _playerScores[player.Id] += scoreThisHand;
-                        }
-                        else if (bid > 0 || previousPoints < 150)
-                        {
-                            _playerScores[player.Id] = previousPoints + scoreThisHand;
-                        }
+                        Debug.LogFormat("Penalizing team {0} (bid holders) for not making their bid of {1}.  They made {2}", bidHoldingTeam, heldBid, holdersScoreThisHand);
+                        var beforePenalty = _previousTeamScores[bidHoldingTeam];
+                        _teamScores[bidHoldingTeam] = _previousTeamScores[bidHoldingTeam] - heldBid;
+                        var afterPenalty = _teamScores[bidHoldingTeam];
+                        Debug.LogFormat("subtracted {0} points from team {1}", beforePenalty - afterPenalty, bidHoldingTeam);
+                    }
+                    else
+                    {
+                        Debug.LogFormat("Awarding points to team {0} (bid holders) for making their bid of {1}.  They made {2}", bidHoldingTeam, heldBid, holdersScoreThisHand);
+                        _teamScores[bidHoldingTeam] += _previousTeamScores[bidHoldingTeam];
+                    }
+
+                    var nonBidHOldingTeam = bidHoldingTeam == 1 ? 2 : 1;
+                    var anyoneFromNonBidHoldingTeamBid =
+                        _bids.Any(
+                            a =>
+                                RuleHelpers.GetTeam(_players.Single(b => b.Id == a.Key)) != bidHoldingTeam &&
+                                a.Value > 0);
+                    if (anyoneFromNonBidHoldingTeamBid || _previousTeamScores[nonBidHOldingTeam] < 150)
+                    {
+                        _teamScores[nonBidHOldingTeam] += _previousTeamScores[nonBidHOldingTeam];
+                    }
+                    else
+                    {
+                        _teamScores[nonBidHOldingTeam] = _previousTeamScores[nonBidHOldingTeam];
                     }
                     return;
                 }
@@ -137,14 +156,16 @@ namespace Assets.Scripts.GameLogic
         public bool IsTrumpDetermined { get; set; }
         public Suit TrumpSuit { get; set; }
 
-        public int GetPointsForPlayer(int playerId)
+        public int GetPointsForTeam(int team)
         {
-            return _playerScores[playerId];
+            return _teamScores[team];
         }
 
         private void TallyScores(IRound round)
         {
-            _playerScores[round.GetWinner().Id] += round.GetWinnersPoints();
+            var winner = round.GetWinner();
+            var team = RuleHelpers.GetTeam(winner);
+            _teamScores[team] += round.GetWinnersPoints();
         }
     }
 }

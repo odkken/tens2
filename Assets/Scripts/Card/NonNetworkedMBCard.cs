@@ -1,6 +1,5 @@
 ﻿using Assets.Scripts.Initialization;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace Assets.Scripts.Card
 {

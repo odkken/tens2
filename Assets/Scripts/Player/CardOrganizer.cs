@@ -47,28 +47,34 @@ namespace Assets.Scripts.Player
 
         public void OrganizeHandCards(List<ICard> cards, Position pos)
         {
-            var suits = cards.GroupBy(a => a.Suit).OrderByDescending(a => a.First().Suit);
-            List<ICard> sortedCards = new List<ICard>();
-            foreach (var suit in suits)
+            try
             {
-                sortedCards.AddRange(suit.OrderByDescending(a => a.Rank));
+                var suits = cards.GroupBy(a => a.Suit).OrderByDescending(a => a.First().Suit);
+                List<ICard> sortedCards = new List<ICard>();
+                foreach (var suit in suits)
+                {
+                    sortedCards.AddRange(suit.OrderByDescending(a => a.Rank));
+                }
+                var i = 0;
+                var handPosition = RuleHelpers.GetHandPosition(pos);
+                foreach (var card in sortedCards)
+                {
+                    var mover = card.Movable;
+                    mover.Orient(-handPosition);
+                    var fraction = i * 1f / Math.Max(cards.Count - 1, 1);
+                    var tiltAngle = Mathf.Lerp(-_handTilt, _handTilt, fraction);
+                    mover.Tilt(tiltAngle);
+                    mover.MoveTo(handPosition * _handDistance
+                                 + RelativeRight(-handPosition) * Mathf.Lerp(-_handWidth * .5f, _handWidth * .5f, fraction)
+                                 + new Vector3(0, 0, .1f * fraction)
+                                 + handPosition * Math.Abs(tiltAngle) * .002f, 0, .5f);
+                    mover.Flip(_areMine ? FlipState.FaceUp : FlipState.FaceDown);
+                    i++;
+                }
             }
-            var i = 0;
-            var handPosition = RuleHelpers.GetHandPosition(pos);
-            foreach (var card in sortedCards)
+            catch (Exception e)
             {
-                var mover = card.Movable;
-                mover.Orient(-handPosition);
-                if (_areMine)
-                    mover.Flip(FlipState.FaceUp, true);
-                var fraction = i * 1f / Math.Max(cards.Count - 1, 1);
-                var tiltAngle = Mathf.Lerp(-_handTilt, _handTilt, fraction);
-                mover.Tilt(tiltAngle);
-                mover.MoveTo(handPosition * _handDistance
-                    + RelativeRight(-handPosition) * Mathf.Lerp(-_handWidth * .5f, _handWidth * .5f, fraction)
-                    + new Vector3(0, 0, .1f * fraction)
-                    + handPosition * Math.Abs(tiltAngle) * .002f);
-                i++;
+                DebugConsole.Log(e.ToString(), "red");
             }
 
         }

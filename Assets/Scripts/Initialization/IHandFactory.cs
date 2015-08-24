@@ -6,6 +6,6 @@ namespace Assets.Scripts.Initialization
 {
     public interface IHandFactory
     {
-        IHand GetNewHand(List<IPlayer> players, int firstPlayerId, Dictionary<int, int> previousScores);
+        IHand GetNewHand(List<IPlayer> players, int firstPlayerId, int team1PreviousScore, int team2PreviousScore);
     }
 }

@@ -15,7 +15,7 @@ namespace Assets.Scripts.UI
             }
         }
 
-        private int minBid;
+        private int _minBid;
         private int _currentBid;
 
         void Start()
@@ -25,11 +25,11 @@ namespace Assets.Scripts.UI
 
         public delegate void BidSubmitted(int bid);
         public static event BidSubmitted OnBidSubmitted;
-        public void SetMinBid(int min)
+        public void SetMinBid(int min, string player)
         {
-            minBid = min;
+            _minBid = min;
             CurrentBid = min;
-            transform.FindChild("MinBid").GetComponent<Text>().text = "Min Bid: " + minBid;
+            transform.FindChild("MinBid").GetComponent<Text>().text = player + ": " + (player == "Minimum" ? _minBid : (_minBid - 5));
         }
         public void UpBid()
         {
@@ -41,8 +41,8 @@ namespace Assets.Scripts.UI
         public void DownBid()
         {
             CurrentBid -= 5;
-            if (CurrentBid < minBid)
-                CurrentBid = minBid;
+            if (CurrentBid < _minBid)
+                CurrentBid = _minBid;
         }
 
         public void Hide()
