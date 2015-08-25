@@ -101,6 +101,7 @@
     <Compile Include="Assets\Scripts\Initialization\RoundFactory.cs" />
     <Compile Include="Assets\Scripts\Initialization\SimpleCardFactory.cs" />
     <Compile Include="Assets\Scripts\Initialization\SimpleDeck.cs" />
+    <Compile Include="Assets\Scripts\ServerActionButton.cs" />
     <Compile Include="Assets\Scripts\Misc\DebugConsole.cs" />
     <Compile Include="Assets\Scripts\Misc\Extensions.cs" />
     <Compile Include="Assets\Scripts\Misc\OrganizerTester.cs" />
@@ -114,7 +115,6 @@
     <Compile Include="Assets\Scripts\UI\ScoreDisplay.cs" />
     <Compile Include="Assets\Scripts\UI\SeatButton.cs" />
     <Compile Include="Assets\Scripts\UI\SeatManager.cs" />
-    <Compile Include="Assets\Scripts\JoinButton.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>
