@@ -17,7 +17,10 @@ namespace Assets.Scripts.Player
         private void Start()
         {
             Id = (int)netId.Value;
-            Name = "Player " + Id;
+            if (isLocalPlayer)
+                CmdSetName(Matchmaker.PLAYER_NAME);
+            else
+                CmdRequestName();
             if (OnPlayerJoined != null)
                 OnPlayerJoined(this);
 
@@ -74,6 +77,12 @@ namespace Assets.Scripts.Player
                 }
             };
         }
+        [Command]
+        private void CmdRequestName()
+        {
+            RpcSetName(Name);
+        }
+
 
         private void OnDestroy()
         {
@@ -100,7 +109,12 @@ namespace Assets.Scripts.Player
         private bool _isMyPlayTurn;
         private CardOrganizer _organizer;
         public int Id { get; private set; }
-        public string Name { get; private set; }
+
+        public string Name
+        {
+            get { return _name; }
+            private set { _name = value; }
+        }
 
         [Command]
         void CmdSetName(string name)
@@ -250,6 +264,9 @@ namespace Assets.Scripts.Player
         private bool _bot = false;
 
         private RuleHelpers.RoundInfo _currentRoundInfo;
+
+        [SyncVar]
+        private string _name;
 
         [ClientRpc]
         private void RpcPlayCard(int[] cardsPlayedInRound, Suit playedSuit, Suit trumpSuit)
