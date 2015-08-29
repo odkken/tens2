@@ -197,6 +197,7 @@ namespace Assets.Scripts.Player
         [ClientRpc]
         private void RpcPromptBid(int minBid, string currentHolder)
         {
+            FindObjectOfType<PlayerLabels>().HighlightPlayerName(Name);
             if (!isLocalPlayer)
                 return;
             DebugConsole.Log(Name + " received prompt to bid");
@@ -271,6 +272,7 @@ namespace Assets.Scripts.Player
         [ClientRpc]
         private void RpcPlayCard(int[] cardsPlayedInRound, Suit playedSuit, Suit trumpSuit)
         {
+            FindObjectOfType<PlayerLabels>().HighlightPlayerName(Name);
             if (!isLocalPlayer)
                 return;
             DebugConsole.Log(Name + " received prompt to play a card");

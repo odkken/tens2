@@ -13,6 +13,16 @@ namespace Assets.Scripts.UI
             Hide();
         }
 
+        public void HighlightPlayerName(string player)
+        {
+            var texts = GetComponentsInChildren<Text>();
+            foreach (var text in texts)
+            {
+                text.color = Color.white;
+                if (text.text == player)
+                    text.color = Color.magenta;
+            }
+        }
         public void Show()
         {
             transform.position = Vector3.zero;
