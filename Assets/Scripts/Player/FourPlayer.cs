@@ -194,6 +194,10 @@ namespace Assets.Scripts.Player
             return HandCards.Contains(card);
         }
 
+        public delegate void NewBidReceived(string player, int amount);
+
+        public static NewBidReceived OnNewBidReceived;
+
         [ClientRpc]
         private void RpcPromptBid(int minBid, string currentHolder)
         {
@@ -205,7 +209,7 @@ namespace Assets.Scripts.Player
             var bidGui = FindObjectOfType<BidGui>();
             bidGui.Show();
             bidGui.SetMinBid(minBid, currentHolder);
-            if (_bot)
+            if (Bot)
             {
                 CmdBid(minBid > 60 ? 0 : minBid);
                 _isMyTurnToBid = false;
@@ -216,7 +220,15 @@ namespace Assets.Scripts.Player
         [Command]
         private void CmdBid(int amount)
         {
+            RpcNewBid(Name, amount);
             _bidAction(amount, this);
+        }
+
+        [ClientRpc]
+        private void RpcNewBid(string player, int amount)
+        {
+            if (OnNewBidReceived != null)
+                OnNewBidReceived(player, amount);
         }
 
         [Command]
@@ -262,7 +274,7 @@ namespace Assets.Scripts.Player
                 trumpSuit);
         }
 
-        private bool _bot = false;
+        public bool Bot = false;
 
         private RuleHelpers.RoundInfo _currentRoundInfo;
 
@@ -284,7 +296,7 @@ namespace Assets.Scripts.Player
                 TrumpSuit = trumpSuit
             };
 
-            if (_bot)
+            if (Bot)
             {
                 _isMyPlayTurn = false;
                 CmdPickedCard(HandCards.First(a => RuleHelpers.IsValidPlay(a, HandCards.Except(_playedCards).ToList(), _currentRoundInfo)).ID);

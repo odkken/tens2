@@ -1,8 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-		<title>Unity Web Player | Tens</title>
+<head>
+		<title>Full browser flexible</title>
+        <meta charset="iso-8859-2">
+        
 		<script type='text/javascript' src='https://ssl-webplayer.unity3d.com/download_webplayer-3.x/3.0/uo/jquery.min.js'></script>
 		<script type="text/javascript">
 		<!--
@@ -15,11 +16,12 @@
 		<script type="text/javascript">
 		<!--
 			var config = {
-				width: 1024, 
-				height: 768,
+				width: "100%", 
+				height: "100%",
 				params: { enableDebugging:"0" }
 				
 			};
+			config.params["disableContextMenu"] = true;
 			var u = new UnityObject2(config);
 			
 			jQuery(function() {
@@ -58,74 +60,89 @@
 				});
 				u.initPlugin(jQuery("#unityPlayer")[0], "web/web.unity3d");
 			});
+			
+			detectLang();
+		
+			function detectLang() {
+				var actualLang = (navigator.language) ? navigator.language : navigator.userLanguage;
+				if(actualLang=="pl"){
+					document.title = "Pe³ne okno przegl±darki";
+				}
+			}
+			
 		-->
 		</script>
-		<style type="text/css">
+	<style type="text/css">
 		<!--
-		body {
-			font-family: Helvetica, Verdana, Arial, sans-serif;
-			background-color: black;
-			color: white;
-			text-align: center;
+	/* hide from ie on mac \*/
+		html {
+		height:100%;
+		margin: 0px;
+		padding: 0px;
+		overflow: hidden;
 		}
+			/* end hide */
+		body {
+		height:100%;
+		font-family: Helvetica, Verdana, Arial, sans-serif;
+			background-color: #cccccc;
+			color: #808080;
+		text-align: center;
+		font-size: medium;
+		border:0;
+		padding: 0;
+		margin: 0;
+		overflow:hidden;
+		}
+		
 		a:link, a:visited {
-			color: #bfbfbf;
+			color: #000;
 		}
 		a:active, a:hover {
-			color: #bfbfbf;
+			color: #666;
 		}
-		p.header {
-			font-size: small;
+		
+		div#content {
+		width: 100%;
+		height: 100%;
+		border:0;
+		padding: 0;
+		margin: 0;
+		overflow:hidden;
 		}
-		p.header span {
-			font-weight: bold;
-		}
-		p.footer {
-			font-size: x-small;
-		}
-		div.content {
-			margin: auto;
-			width: 1200px;
-		}
-		div.broken,
+
 		div.missing {
 			margin: auto;
 			position: relative;
 			top: 50%;
 			width: 193px;
 		}
-		div.broken a,
 		div.missing a {
 			height: 63px;
 			position: relative;
 			top: -31px;
 		}
-		div.broken img,
 		div.missing img {
 			border-width: 0px;
 		}
-		div.broken {
-			display: none;
-		}
 		div#unityPlayer {
 			cursor: default;
-			height: 900px;
-			width: 1200px;
+			width: 100%;
+			height: 100%;
 		}
-		-->
+		
+-->
 		</style>
-	</head>
-	<body>
-		<p class="header"><span>Unity Web Player | </span>Tens</p>
-		<div class="content">
-			<div id="unityPlayer">
-				<div class="missing">
-					<a href="http://unity3d.com/webplayer/" title="Unity Web Player. Install now!">
-						<img alt="Unity Web Player. Install now!" src="http://webplayer.unity3d.com/installation/getunity.png" width="193" height="63" />
-					</a>
-				</div>
+</head>
+<body>
+	<div id="content">
+		<div id="unityPlayer">
+			<div class="missing">
+				<a href="http://unity3d.com/webplayer/" title="Unity Web Player. Install now!">
+					<img alt="Unity Web Player. Install now!" src="http://webplayer.unity3d.com/installation/getunity.png" width="193" height="63" />
+				</a>
 			</div>
 		</div>
-		<p class="footer">&laquo; created with <a href="http://unity3d.com/unity/" title="Go to unity3d.com">Unity</a> &raquo;</p>
-	</body>
+	</div>
+</body>
 </html>

@@ -59,6 +59,7 @@ namespace Assets.Scripts.Player
                 }
                 var i = 0;
                 var handPosition = RuleHelpers.GetHandPosition(pos);
+                var spacing = _handWidth / (10 + cards.Count);
                 foreach (var card in sortedCards)
                 {
                     var mover = card.Movable;

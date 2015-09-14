@@ -11,6 +11,15 @@ namespace Assets.Scripts.UI
         void Start()
         {
             Hide();
+            FourPlayer.OnNewBidReceived += (player, amount) =>
+            {
+                var texts = GetComponentsInChildren<Text>();
+                foreach (var text in texts)
+                {
+                    if (text.text.Contains(player))
+                        text.text = player + " (" + (amount == 0 ? "pass" : amount.ToString()) + ")";
+                }
+            };
         }
 
         public void HighlightPlayerName(string player)
@@ -19,7 +28,7 @@ namespace Assets.Scripts.UI
             foreach (var text in texts)
             {
                 text.color = Color.white;
-                if (text.text == player)
+                if (text.text.Contains(player))
                     text.color = Color.magenta;
             }
         }
@@ -42,7 +51,6 @@ namespace Assets.Scripts.UI
                 child.rotation = Quaternion.LookRotation(Vector3.forward, Camera.main.transform.up);
                 child.GetComponent<Text>().text = players.Single(a => a.Position.ToString() == child.name).Name;
             }
-            transform.FindChild(localPlayer.Position.ToString()).GetComponent<Text>().text = "";
         }
 
         public void Hide()
